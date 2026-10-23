@@ -1,5 +1,5 @@
-// MySQL 8.4 | Aduana Lab3 | Fuente: scripts/model.py
-Project Aduana { database_type: 'MySQL' }
+// SQLite 3 | Aduana Lab3 | Referencia del modelo relacional
+Project Aduana { database_type: 'SQLite' }
 Table pais {
   id_pais int [pk, increment, not null]
   nombre varchar(60) [not null, unique]

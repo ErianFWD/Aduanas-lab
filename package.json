@@ -1,5 +1,5 @@
 {
-  "name": "aduana-lab3",
+  "name": "aduana-lab3-sqlite",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -12,12 +12,11 @@
     "dev": "node scripts/dev.mjs",
     "build": "npm run build --workspace frontend",
     "start": "npm start --workspace backend",
-    "db:import": "node scripts/import-database.mjs",
-    "db:users": "node scripts/create-db-users.mjs",
+    "db:import": "node scripts/init-database.mjs",
     "test": "node --test --test-concurrency=1 tests/*.test.mjs",
     "test:integration": "node tests/integration.mjs"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13.0"
   }
 }

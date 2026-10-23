@@ -1,7 +1,7 @@
 # Aduana | Laboratorio 3
 
 ## Decisión de tecnología
-MySQL 8.4 LTS (mínimo compatible 8.0.16 para CHECK), React con Vite y React Router, API Express y n8n. MySQL y n8n deben compartir una red accesible. La instalación y credenciales del usuario son el punto de intervención pendiente; el proyecto se verifica antes en una instancia temporal aislada.
+SQLite integrado con node:sqlite, React con Vite y React Router, API Express y n8n mediante HTTP. No se necesita un servidor de base de datos separado.
 
 ## Alcance
 13 tablas: pais, importador, agente_aduanal, partida_arancelaria, producto, funcionario, declaracion, detalle_declaracion, contenedor, bodega, inventario, movimiento e inspeccion. Cada una tendrá al menos 15 filas. Las cuentas de la aplicación pertenecen a funcionarios; no se crea una tabla ficticia solo para completar autenticación.
@@ -23,12 +23,14 @@ Administrador: consultar el sistema, usuarios y registrar movimientos. Operador:
 
 El login usa hashes bcrypt y una cookie de sesión HttpOnly, SameSite y con expiración. El frontend no almacena contraseñas ni tokens en localStorage. Logout y cambio de contraseña revocan las sesiones usando una versión de sesión en el JWT; para mantener las 13 tablas, el hash actual se consulta al autorizar cada petición.
 
-La cuenta MySQL del backend tiene lectura y permisos mínimos de escritura. La cuenta n8n solo tiene SELECT en tablas de negocio y una vista de funcionarios sin correo ni contraseña. No se entregan credenciales de producción en archivos.
+La ruta del agente exige AGENT_API_KEY y ejecuta únicamente ocho SELECT preparados en una conexión readOnly con query_only=ON. No acepta SQL del cliente ni devuelve contraseñas. La aplicación utiliza otra conexión para escrituras autorizadas.
 
-La cuenta de la aplicación también tiene LOCK TABLES en su base para poder usar lecturas FOR UPDATE sin conceder edición de declaraciones o bodegas. Los movimientos bloquean la partida y las bodegas en orden ascendente, y utilizan READ COMMITTED para leer saldos actualizados después de esperar un bloqueo. Este permiso no se concede al agente.
+Los movimientos usan BEGIN IMMEDIATE y se ejecutan sin ceder el control antes de COMMIT o ROLLBACK. El bloqueo de escritura de SQLite protege los saldos frente a operaciones concurrentes. Las cantidades se validan y redondean a tres decimales.
+
+SQLite usa afinidad NUMERIC para DECIMAL y no garantiza escala fija ni aritmética decimal exacta. Esta es una práctica educativa, no un sistema contable de producción.
 
 ## Pantallas React
-Login; resumen con indicadores derivados de MySQL; inventario con filtros y exportación CSV; declaraciones y sus detalles; bodegas con ocupación; movimientos con formulario por rol; inspecciones; reportes SQL; asistente conectado a n8n por el backend; usuarios (admin) y perfil.
+Login; resumen con indicadores derivados de SQLite; inventario con filtros y exportación CSV; declaraciones y sus detalles; bodegas con ocupación; movimientos con formulario por rol; inspecciones; reportes SQL; asistente conectado a n8n por el backend; usuarios (admin) y perfil.
 
 ## Alcance de la entrega técnica
-El proyecto está destinado a ejecutarse junto con MySQL. La web no simula respuestas de IA: si falta la configuración de n8n, muestra que la integración está pendiente. Las evidencias académicas del agente se obtienen cuando se vinculen las credenciales personales y se prueben las ocho preguntas.
+El proyecto está destinado a ejecutarse con Node.js y un archivo SQLite local. La web no simula respuestas de IA: si falta la configuración de n8n, muestra que la integración está pendiente. Las evidencias académicas del agente se obtienen cuando se vinculen las credenciales personales y se prueben las ocho preguntas.

@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
-import { query } from './db.js';
+import { query, reader } from './db.js';
+import crypto from 'node:crypto';
 import { requireAuth, requireRole, publicUser, setSession, clearSession } from './auth.js';
 import { createMovement, BusinessError } from './movements.js';
 
@@ -28,7 +29,7 @@ const chatLimit=rateLimit({windowMs:60*1000,limit:12,standardHeaders:'draft-8',l
 
 app.get('/api/health',async(req,res)=>{
   try {await query('SELECT 1');res.json({status:'ok',database:'conectada'});}
-  catch {res.status(503).json({status:'error',database:'sin conexión',error:'No se pudo conectar a MySQL. Revisa backend/.env.'});}
+  catch {res.status(503).json({status:'error',database:'sin conexión',error:'No se pudo abrir SQLite. Revisa la ruta y los permisos del archivo.'});}
 });
 const dummyHash=bcrypt.hashSync('invalid-login-placeholder',10);
 app.post('/api/auth/login',loginLimit,async(req,res)=>{
@@ -39,6 +40,23 @@ app.post('/api/auth/login',loginLimit,async(req,res)=>{
   if(!row || !row.activo || !valid) return res.status(401).json({error:'Correo o contraseña incorrectos.'});
   setSession(res,row); res.json({user:publicUser(row)});
 });
+// Entrada exclusiva del agente; no acepta SQL del cliente ni permite escritura.
+app.get('/api/agente/consultar',rateLimit({windowMs:60000,limit:60}), (req,res)=>{
+  const supplied=Buffer.from(req.get('X-Aduana-Key') || '');
+  const expected=Buffer.from(config.agentKey);
+  if(expected.length<32 || supplied.length!==expected.length || !crypto.timingSafeEqual(supplied,expected)) return res.status(401).json({error:'Clave del agente inválida.'});
+  const id=String(req.query.reporte || '');
+  if(!/^[1-8]$/.test(id) || Object.keys(req.query).some(k=>!['reporte','producto'].includes(k))) return res.status(400).json({error:'Selecciona un reporte del 1 al 8. No se acepta SQL.'});
+  const product=req.query.producto || 'ADU-0001';
+  if(typeof product!=='string' || !/^ADU-\d{4}$/.test(product)) return res.status(400).json({error:'Producto inválido. Usa un SKU como ADU-0001.'});
+  const report=reports.find(r=>r.id===Number(id));
+  let sql=report.sql.trim().replace(/;$/, '');
+  const params=[];
+  if(id==='6') {sql=sql.replace("p.sku='ADU-0001'",'p.sku=?');params.push(product);}
+  const rows=reader.prepare('SELECT * FROM ('+sql+') LIMIT 101').all(...params);
+  res.json({reporte:Number(id),titulo:id==='6'?'Stock del producto '+product:report.titulo,filas:rows.slice(0,100),truncado:rows.length>100,limite:100});
+});
+
 app.use('/api',requireAuth);
 app.get('/api/auth/me',(req,res)=>res.json({user:req.user}));
 app.post('/api/auth/logout',async(req,res)=>{
@@ -60,11 +78,11 @@ app.get('/api/dashboard',async(req,res)=>{
     query(`SELECT (SELECT COUNT(*) FROM declaracion) AS declaraciones,
       (SELECT COUNT(*) FROM inventario WHERE estado='Retenido' AND cantidad>0) AS partidas_retenidas,
       (SELECT COUNT(*) FROM bodega) AS bodegas,
-      (SELECT COALESCE(SUM(i.cantidad*dd.valor_declarado/dd.cantidad),0) FROM inventario i JOIN detalle_declaracion dd ON dd.id_declaracion=i.id_declaracion AND dd.id_producto=i.id_producto) AS valor_inventario_usd,
+      (SELECT COALESCE(SUM(i.cantidad*1.0*dd.valor_declarado/dd.cantidad),0) FROM inventario i JOIN detalle_declaracion dd ON dd.id_declaracion=i.id_declaracion AND dd.id_producto=i.id_producto) AS valor_inventario_usd,
       (SELECT COUNT(*) FROM inspeccion WHERE resultado='Con observaciones') AS inspecciones_observadas`),
     query('SELECT p.nombre,COUNT(*) AS total FROM declaracion d JOIN pais p ON p.id_pais=d.id_pais_origen GROUP BY p.id_pais,p.nombre ORDER BY total DESC,p.nombre LIMIT 5'),
     query('SELECT regimen,COUNT(*) AS total FROM declaracion GROUP BY regimen ORDER BY total DESC,regimen'),
-    query("SELECT DATE_FORMAT(fecha,'%Y-%m') AS mes,COUNT(*) AS total FROM declaracion GROUP BY mes ORDER BY mes"),
+    query("SELECT strftime('%Y-%m',fecha) AS mes,COUNT(*) AS total FROM declaracion GROUP BY mes ORDER BY mes"),
     query('SELECT m.id_movimiento,m.tipo,m.fecha,m.cantidad,p.descripcion,p.unidad_medida,bo.nombre AS origen,bd.nombre AS destino FROM movimiento m JOIN producto p ON p.id_producto=m.id_producto LEFT JOIN bodega bo ON bo.id_bodega=m.id_bodega_origen LEFT JOIN bodega bd ON bd.id_bodega=m.id_bodega_destino ORDER BY m.fecha DESC,m.id_movimiento DESC LIMIT 5'),
     query('SELECT b.id_bodega,b.nombre,b.capacidad_peso_kg,COALESCE(SUM(i.cantidad*p.peso_unitario_kg),0) AS peso_ocupado_kg FROM bodega b LEFT JOIN inventario i ON i.id_bodega=b.id_bodega LEFT JOIN producto p ON p.id_producto=i.id_producto GROUP BY b.id_bodega,b.nombre,b.capacidad_peso_kg ORDER BY peso_ocupado_kg/b.capacidad_peso_kg DESC LIMIT 4')
   ]);
@@ -96,7 +114,7 @@ app.get('/api/inventario',async(req,res)=>{
   const f=filters(req,['p.descripcion','p.sku','d.numero','pa.nombre','b.nombre'],'i.estado');
   f.where.push('i.cantidad>0');
   if(req.query.bodega) {f.where.push('i.id_bodega=?');f.params.push(Number(req.query.bodega)||0);}
-  await paginated(req,res,{...f,select:'SELECT i.*,p.sku,p.descripcion,p.unidad_medida,p.peso_unitario_kg,b.nombre AS bodega,d.numero AS declaracion,pa.nombre AS pais_origen,ROUND(i.cantidad*dd.valor_declarado/dd.cantidad,2) AS valor_usd',from:'FROM inventario i JOIN producto p ON p.id_producto=i.id_producto JOIN declaracion d ON d.id_declaracion=i.id_declaracion JOIN detalle_declaracion dd ON dd.id_declaracion=i.id_declaracion AND dd.id_producto=i.id_producto JOIN pais pa ON pa.id_pais=d.id_pais_origen JOIN bodega b ON b.id_bodega=i.id_bodega',order:'i.fecha_ingreso DESC,i.id_inventario DESC'});
+  await paginated(req,res,{...f,select:'SELECT i.*,p.sku,p.descripcion,p.unidad_medida,p.peso_unitario_kg,b.nombre AS bodega,d.numero AS declaracion,pa.nombre AS pais_origen,ROUND(i.cantidad*1.0*dd.valor_declarado/dd.cantidad,2) AS valor_usd',from:'FROM inventario i JOIN producto p ON p.id_producto=i.id_producto JOIN declaracion d ON d.id_declaracion=i.id_declaracion JOIN detalle_declaracion dd ON dd.id_declaracion=i.id_declaracion AND dd.id_producto=i.id_producto JOIN pais pa ON pa.id_pais=d.id_pais_origen JOIN bodega b ON b.id_bodega=i.id_bodega',order:'i.fecha_ingreso DESC,i.id_inventario DESC'});
 });
 app.get('/api/declaraciones',async(req,res)=>{
   const f=filters(req,['d.numero','im.razon_social','pa.nombre'],'d.estado');

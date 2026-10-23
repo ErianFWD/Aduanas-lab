@@ -20,7 +20,7 @@
     {
       "nombre": "Bodega 02",
       "estado": "Liberado",
-      "peso_ocupado_kg": 5.6,
+      "peso_ocupado_kg": 5.6000000000000005,
       "capacidad_peso_kg": 55000,
       "porcentaje_capacidad": 0.01
     },
@@ -64,7 +64,7 @@
       "estado": "Liberado",
       "peso_ocupado_kg": 1240,
       "capacidad_peso_kg": 62500,
-      "porcentaje_capacidad": 1.98
+      "porcentaje_capacidad": 1
     },
     {
       "nombre": "Bodega 05",
@@ -76,7 +76,7 @@
     {
       "nombre": "Bodega 06",
       "estado": "Liberado",
-      "peso_ocupado_kg": 446.76,
+      "peso_ocupado_kg": 446.76000000000005,
       "capacidad_peso_kg": 65000,
       "porcentaje_capacidad": 0.69
     },
@@ -148,7 +148,7 @@
       "estado": "Liberado",
       "peso_ocupado_kg": 500,
       "capacidad_peso_kg": 77500,
-      "porcentaje_capacidad": 0.65
+      "porcentaje_capacidad": 0
     },
     {
       "nombre": "Bodega 11",

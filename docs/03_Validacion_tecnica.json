@@ -1,6 +1,6 @@
 {
-  "fecha": "2026-10-23T15:43:17.198Z",
-  "motor": "MySQL 8.4.13 · instancia temporal propia",
+  "fecha": "2026-10-23T20:07:32.356Z",
+  "motor": "SQLite · archivo temporal propio",
   "pruebas": [
     {
       "prueba": "Script SQL completo: creación, datos y ocho consultas",
@@ -23,7 +23,7 @@
       "resultado": "OK"
     },
     {
-      "prueba": "Usuario n8n: permite SELECT y rechaza escritura y lectura de contraseñas",
+      "prueba": "Conexión del agente abierta en modo de solo lectura",
       "resultado": "OK"
     },
     {
@@ -39,7 +39,7 @@
       "resultado": "OK"
     },
     {
-      "prueba": "Todas las pantallas reciben datos de MySQL",
+      "prueba": "Todas las pantallas reciben datos de SQLite",
       "resultado": "OK"
     },
     {
@@ -87,16 +87,32 @@
       "resultado": "OK"
     },
     {
+      "prueba": "Puente React-n8n transmite pregunta, sesión por usuario y autenticación",
+      "resultado": "OK"
+    },
+    {
       "prueba": "Logout revoca el token anterior en el servidor",
       "resultado": "OK"
     },
     {
       "prueba": "Cambio de contraseña invalida sesiones y acepta la nueva clave",
       "resultado": "OK"
+    },
+    {
+      "prueba": "Agente HTTP: exige clave, valida parámetros y rechaza SQL arbitrario",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Consulta repetida del agente conserva los datos",
+      "resultado": "OK"
     }
   ],
   "agente_llm_verificado": false,
-  "interfaz": "Login y panel revisados visualmente en navegador; inventario cargado desde MySQL. Sesión aislada de QA, con autenticación real probada por separado en la API.",
-  "pruebas_unitarias": 9,
-  "build_react": "vite 7.3.7: correcto; fuentes servidas localmente"
+  "instalacion_limpia": {
+    "npm_ci": "OK",
+    "setup": "OK",
+    "npm_run_dev": "OK",
+    "frontend_y_proxy": "OK",
+    "login_desde_origen_web": "OK"
+  }
 }

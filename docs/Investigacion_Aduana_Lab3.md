@@ -14,13 +14,13 @@ Este trabajo propone organizar el inventario de una aduana en una base relaciona
 
 
 
-Una **base de datos** reúne información organizada para consultarla y mantenerla. Un **Sistema Gestor de Bases de Datos (SGBD)** es el programa que administra esa información, ejecuta consultas y aplica permisos y reglas. En el proyecto, aduana_lab3 es la base; MySQL es el gestor [1].
+Una **base de datos** reúne información organizada para consultarla y mantenerla. Un **Sistema Gestor de Bases de Datos (SGBD)** administra esa información, ejecuta consultas y aplica reglas. En este proyecto, aduana_lab3.sqlite es el archivo de datos y SQLite es el gestor integrado en el backend [1, 7].
 
 El modelo **relacional** representa la información mediante tablas conectadas por llaves. NoSQL comprende otros modelos, como documentos, grafos o pares clave-valor. Puede ofrecer estructuras flexibles; eso no significa que carezca de reglas ni que sea siempre mejor. Elegimos un modelo relacional porque necesitamos relacionar declaraciones, productos y bodegas con integridad referencial [1, 2].
 
-Una **tabla** representa un conjunto, como los productos. Un **registro o fila** describe un elemento concreto. Un **campo o columna** identifica un atributo, como descripción o peso. El tipo de dato delimita qué puede guardarse: INT para identificadores enteros, VARCHAR para texto variable, CHAR para códigos de longitud fija, DATE para fechas y DATETIME para fecha y hora [3].
+Una **tabla** representa un conjunto, como los productos. Un **registro o fila** describe un elemento concreto. Un **campo o columna** identifica un atributo. En SQLite usamos INTEGER para identificadores autoincrementales. VARCHAR y CHAR se aceptan con afinidad de texto; DATE y DATETIME almacenan nuestras fechas en formato ISO. SQLite no impone por sí solo la longitud escrita en VARCHAR(n) [3].
 
-Usamos **DECIMAL** para importes y cantidades que requieren precisión definida. Por ejemplo, DECIMAL(14,2) admite catorce dígitos en total, dos de ellos decimales. Los valores del laboratorio están expresados en USD; las capacidades de las bodegas y los pesos unitarios, en kilogramos. Una unidad de un saco de arroz no equivale a un kilogramo [3].
+Conservamos declaraciones **DECIMAL** para expresar la intención del modelo, pero SQLite les asigna afinidad NUMERIC y no garantiza una escala decimal fija. La aplicación valida tres decimales para cantidades y redondea las actualizaciones; los importes se muestran con dos decimales. Puede haber aproximación binaria: una aplicación financiera real debería usar unidades enteras o aritmética decimal específica. Los valores están en USD y los pesos en kg [3].
 
 
 
@@ -101,7 +101,7 @@ JOIN conecta tablas; WHERE filtra filas; GROUP BY forma grupos para calcular tot
 
 
 
-## A-B. Normalización, diagrama y gestor
+## A-B. Normalización y elección del gestor
 
 
 
@@ -121,9 +121,7 @@ La **tercera forma normal (3FN)** elimina dependencias transitivas inadecuadas e
 
 
 
-El **DER** muestra entidades, atributos y relaciones antes de implementarlos. La cardinalidad expresa cuántos elementos pueden participar y si la relación es opcional. En **Chen** se representan entidades con rectángulos, relaciones con rombos y atributos con óvalos. La notación de **pata de gallo** utiliza extremos de líneas para indicar uno, muchos y participación opcional. El diagrama entregado usa cardinalidades numéricas explícitas, tipos, PK y FK; incluye su fuente editable [5].
-
-Nuestro modelo tiene 13 tablas. El detalle resuelve la relación N:M. Inventario y movimiento conservan la pareja declaración-producto para no confundir partidas del mismo producto que llegan de países diferentes. La bodega y el estado completan la identificación de cada existencia.
+El **DER** muestra entidades, atributos y relaciones antes de implementarlos. La cardinalidad expresa cuántos elementos pueden participar y si la relación es opcional. En **Chen** se representan entidades con rectángulos, relaciones con rombos y atributos con óvalos. La notación de **pata de gallo** utiliza extremos de líneas para indicar uno, muchos y participación opcional. Estas notaciones permiten interpretar las relaciones de un modelo antes de escribir el SQL [5].
 
 
 
@@ -141,7 +139,7 @@ Nuestro modelo tiene 13 tablas. El detalle resuelve la relación N:M. Inventario
 
 | PostgreSQL | Gestor objeto-relacional con SQL y nodo Postgres. | También requiere servidor y credenciales. |
 
-**Elegimos MySQL 8.4** por la integración directa prevista en la guía y la necesidad de practicar cuentas, relaciones y transacciones. SQLite sería útil para una aplicación embebida; PostgreSQL también cumple el objetivo. La elección responde a la implementación del laboratorio, no a que un gestor sea universalmente superior [7, 8, 9].
+**Elegimos SQLite** porque permite ejecutar el laboratorio sin instalar ni administrar otro servidor. La base se crea a partir del script SQL y se guarda en un archivo. La conexión con n8n se resuelve mediante una herramienta HTTP que llama al backend. MySQL y PostgreSQL también cumplen la consigna, pero necesitan un servidor separado [7, 8, 9].
 
 
 ---
@@ -163,7 +161,7 @@ Un **modelo de lenguaje (LLM)** interpreta instrucciones y genera texto; no cono
 
 
 
-El Chat Trigger recibe la pregunta. Un nodo de validación comprueba que haya texto y un identificador de conversación. El AI Agent interpreta la intención y utiliza el nodo MySQL como herramienta. El modelo redacta la respuesta a partir de las filas obtenidas. Simple Memory conserva interacciones recientes de la misma sesión para entender preguntas de seguimiento [9, 11].
+El Chat Trigger recibe la pregunta. El AI Agent interpreta la intención y elige uno de ocho informes disponibles mediante HTTP Request. El backend valida una clave de acceso y ejecuta el SELECT preparado sobre SQLite. El modelo redacta la respuesta usando las filas obtenidas. Simple Memory conserva el contexto de la sesión. El flujo tiene cinco nodos [9, 11].
 
 La memoria no sustituye a la base de datos ni garantiza almacenamiento permanente. Si se pregunta por existencias actuales, el agente debe consultar otra vez. Simple Memory es apropiada para la práctica en una instancia sencilla; no debe asumirse que comparte conversaciones entre varios trabajadores en modo de colas [11].
 
@@ -173,13 +171,13 @@ La memoria no sustituye a la base de datos ni garantiza almacenamiento permanent
 
 
 
-El usuario MySQL del agente recibe **únicamente SELECT** sobre tablas de negocio y una vista pública de funcionarios. No puede acceder a los hashes de contraseña. La protección se aplica con permisos del gestor; escribir en el prompt que no borre información es una instrucción complementaria, no una barrera suficiente [12].
+SQLite no administra usuarios con GRANT como MySQL. El agente accede a una ruta protegida por una clave privada. Esa ruta usa una conexión SQLite abierta en **modo de solo lectura** y solo admite ocho consultas predefinidas, con parámetros validados. No admite SQL libre ni devuelve hashes de contraseña. La protección existe en el servicio y en la conexión, además del prompt [12].
 
-El mensaje de sistema describe tablas, columnas y relaciones. También aclara que valor_declarado es el total de la línea, que las cantidades tienen unidades y que los resultados vacíos no son errores de conexión. El flujo incorpora un filtro preventivo de SQL, pero la cuenta de solo lectura sigue siendo la protección principal. Las consultas generadas deben revisarse y comparar sus resultados con los reportes [9, 12].
+El mensaje de sistema describe tablas, columnas y los ocho informes disponibles. Aclara que valor_declarado es el total de la línea y que las cantidades tienen unidades. El agente selecciona un informe, no escribe SQL. Las respuestas incluyen como máximo cien filas; si están truncadas, no se deben presentar sumas parciales como totales. Una pregunta fuera del alcance se informa al usuario [9].
 
-La aplicación React agrega login, rutas privadas y consulta por rol. El backend valida la sesión antes de acceder a MySQL y envía las preguntas a n8n. Las claves del modelo y de la base no se incorporan al frontend. Para conectar la web, el chat de n8n se configurará con autenticación y su URL se guardará únicamente en el backend.
+La aplicación React agrega login, rutas privadas y permisos por rol. El backend valida la sesión antes de consultar SQLite y envía las preguntas a n8n. Las claves del modelo y del agente no se incorporan al frontend. Para conectar la web, el chat de n8n se configura con autenticación y su URL se guarda únicamente en el backend.
 
-**Estado de verificación:** el SQL y la API se ejecutaron en una instancia temporal real de MySQL. El JSON de n8n pasó comprobaciones estructurales y su código de validación se probó aisladamente. La importación y ejecución del agente con un LLM todavía requieren las credenciales del estudiante; no se presentan como realizadas.
+**Estado de verificación:** el script y la API se ejecutaron sobre un archivo SQLite temporal. Se comprobaron autenticación, movimientos, restricciones, reportes y la ruta de consulta del agente. El JSON de n8n pasó revisión estructural; su importación y ejecución con un LLM requieren las credenciales del estudiante y no se presentan como realizadas.
 
 
 ---
@@ -215,7 +213,7 @@ El **agente aduanal** participa en la gestión y representación de trámites ad
 
 **Instrucciones utilizadas en la conversación:** “analiza este trabajo al maximo” y “yo si quiero que le agregues React, frontend, login, rutas privadas”. Como prompts de apoyo para el estudiante se proponen: “Explica una llave foránea con un ejemplo aduanero” y “Comprueba que los saldos coincidan con entradas, salidas y traslados”.
 
-**Hallazgos del proceso:** conservar el origen exige enlazar las existencias con su declaración; los JOIN pueden duplicar totales si se combinan varios conjuntos sin agregarlos; y los permisos de solo lectura deben probarse en el gestor. También se corrigió una restricción incompatible con una columna autoincremental y un permiso que faltaba para realizar lecturas con bloqueo.
+**Hallazgos del proceso:** conservar el origen exige enlazar las existencias con su declaración; un JOIN puede duplicar totales; y la lectura segura debe comprobarse fuera del prompt. La adaptación a SQLite requirió cambiar autoincrementos, consultas de fechas y transacciones. La conexión HTTP simplifica n8n a cambio de limitar el agente a ocho informes preparados.
 
 **Revisión personal pendiente:** cada integrante debe ejecutar el proyecto, completar sus datos, explicar las relaciones y añadir lo que aprendió durante sus propias pruebas. Las capturas de las ocho respuestas del agente se obtendrán después de configurar sus credenciales. Este borrador no atribuye al estudiante pruebas o aprendizajes personales que aún no ha realizado.
 
@@ -235,10 +233,10 @@ El **agente aduanal** participa en la gestión y representación de trámites ad
 [2] MongoDB. (s. f.). What is NoSQL? https://www.mongodb.com/resources/basics/databases/nosql-explained
 
 
-[3] Oracle. (s. f.). MySQL 8.4 Reference Manual: Data types. https://dev.mysql.com/doc/refman/8.4/en/data-types.html
+[3] SQLite. (s. f.). Datatypes in SQLite. https://www.sqlite.org/datatype3.html
 
 
-[4] Oracle. (s. f.). MySQL 8.4 Reference Manual: CREATE TABLE. https://dev.mysql.com/doc/refman/8.4/en/create-table.html
+[4] SQLite. (s. f.). CREATE TABLE. https://www.sqlite.org/lang_createtable.html
 
 
 [5] Oracle. (s. f.). Adding foreign key relationships using an EER diagram. https://dev.mysql.com/doc/workbench/en/wb-relationship-tools.html
@@ -253,7 +251,7 @@ El **agente aduanal** participa en la gestión y representación de trámites ad
 [8] PostgreSQL Global Development Group. (s. f.). About PostgreSQL. https://www.postgresql.org/about/
 
 
-[9] n8n. (s. f.). MySQL. https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.mysql
+[9] n8n. (s. f.). HTTP Request. https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/
 
 
 [10] n8n. (s. f.). Understand workflows. https://docs.n8n.io/build/understand-workflows.md
@@ -262,7 +260,7 @@ El **agente aduanal** participa en la gestión y representación de trámites ad
 [11] n8n. (s. f.). Simple Memory. https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.memorybufferwindow
 
 
-[12] Oracle. (s. f.). MySQL 8.4 Reference Manual: GRANT. https://dev.mysql.com/doc/refman/8.4/en/grant.html
+[12] Node.js. (s. f.). SQLite: DatabaseSync y readOnly. https://nodejs.org/docs/latest-v24.x/api/sqlite.html
 
 
 [13] Ministerio de Hacienda de Costa Rica. (2021). Manual de procedimientos aduaneros. Secciones de definiciones y procedimientos por régimen. https://www.hacienda.go.cr/docs/Manual_de_Procedimientos_Aduaneros2021_Febrero2021.pdf

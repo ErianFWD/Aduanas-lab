@@ -1,6 +1,6 @@
 # Evidencias pendientes del agente
 
-Los JSON en resultados_sql son resultados reales de consultas ejecutadas sobre los datos iniciales en MySQL. **No son respuestas ni capturas del agente.** Si modificas el inventario, sus cifras pueden cambiar; vuelve a ejecutar el reporte antes de comparar.
+Los JSON en resultados_sql son resultados reales de consultas ejecutadas sobre los datos iniciales en SQLite. **No son respuestas ni capturas del agente.** Si modificas el inventario, sus cifras pueden cambiar; vuelve a ejecutar el reporte antes de comparar.
 
 Una vez configurado n8n, captura la pregunta y la respuesta completa. No incluyas credenciales, claves ni ventanas de configuración sensible.
 
