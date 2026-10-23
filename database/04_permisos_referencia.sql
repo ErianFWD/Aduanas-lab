@@ -1,0 +1,9 @@
+-- Referencia explicativa. Usa npm run db:users para crear contraseñas aleatorias.
+-- Ejecutar como administrador. Cambiar las cadenas ANTES de usar este ejemplo.
+-- No subir este archivo con contraseñas reales.
+-- CREATE USER 'aduana_lector'@'localhost' IDENTIFIED BY 'CAMBIAR_POR_UNA_CLAVE_PRIVADA';
+-- GRANT SELECT ON aduana_lab3.inventario TO 'aduana_lector'@'localhost';
+-- Repetir SELECT exclusivamente sobre tablas de negocio y v_funcionario_publico.
+-- No conceder SELECT sobre funcionario: contiene hashes de contraseñas.
+-- No conceder INSERT, UPDATE, DELETE, CREATE, DROP, FILE ni GRANT OPTION.
+-- SHOW GRANTS FOR 'aduana_lector'@'localhost';

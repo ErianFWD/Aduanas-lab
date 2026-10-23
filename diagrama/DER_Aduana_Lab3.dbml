@@ -1,0 +1,140 @@
+// MySQL 8.4 | Aduana Lab3 | Fuente: scripts/model.py
+Project Aduana { database_type: 'MySQL' }
+Table pais {
+  id_pais int [pk, increment, not null]
+  nombre varchar(60) [not null, unique]
+  codigo_iso char(2) [not null, unique]
+}
+
+Table importador {
+  id_importador int [pk, increment, not null]
+  razon_social varchar(120) [not null]
+  identificacion varchar(25) [not null, unique]
+  direccion varchar(200) [not null]
+  telefono varchar(25) [not null]
+  correo varchar(120) [not null, unique]
+}
+
+Table agente_aduanal {
+  id_agente int [pk, increment, not null]
+  nombre varchar(100) [not null]
+  licencia varchar(25) [not null, unique]
+  telefono varchar(25) [not null]
+}
+
+Table partida_arancelaria {
+  id_partida int [pk, increment, not null]
+  codigo varchar(12) [not null, unique]
+  descripcion varchar(180) [not null]
+  porcentaje_arancel decimal(5,2) [not null]
+}
+
+Table producto {
+  id_producto int [pk, increment, not null]
+  sku varchar(30) [not null, unique]
+  descripcion varchar(140) [not null]
+  unidad_medida varchar(15) [not null]
+  valor_referencia decimal(14,2) [not null]
+  peso_unitario_kg decimal(12,3) [not null]
+  id_partida int [not null]
+}
+
+Table funcionario {
+  id_funcionario int [pk, not null]
+  nombre varchar(100) [not null]
+  cargo varchar(60) [not null]
+  id_supervisor int
+  correo varchar(120) [not null, unique]
+  password_hash varchar(255) [not null]
+  rol varchar(15) [not null]
+  activo boolean [not null]
+  session_version int [not null]
+}
+
+Table declaracion {
+  id_declaracion int [pk, increment, not null]
+  numero varchar(25) [not null, unique]
+  fecha date [not null]
+  regimen varchar(15) [not null]
+  estado varchar(20) [not null]
+  moneda char(3) [not null]
+  id_importador int [not null]
+  id_agente int [not null]
+  id_pais_origen int [not null]
+}
+
+Table detalle_declaracion {
+  id_declaracion int [not null]
+  id_producto int [not null]
+  cantidad decimal(12,3) [not null]
+  valor_declarado decimal(14,2) [not null]
+  indexes {
+    (id_declaracion, id_producto) [pk]
+  }
+}
+
+Table contenedor {
+  id_contenedor int [pk, increment, not null]
+  numero varchar(15) [not null, unique]
+  tipo varchar(25) [not null]
+  peso_bruto_kg decimal(12,3) [not null]
+  id_declaracion int [not null]
+}
+
+Table bodega {
+  id_bodega int [pk, increment, not null]
+  nombre varchar(80) [not null, unique]
+  ubicacion varchar(160) [not null]
+  capacidad_peso_kg decimal(14,3) [not null]
+}
+
+Table inventario {
+  id_inventario int [pk, increment, not null]
+  id_declaracion int [not null]
+  id_producto int [not null]
+  id_bodega int [not null]
+  cantidad decimal(12,3) [not null]
+  fecha_ingreso date [not null]
+  estado varchar(10) [not null]
+}
+
+Table movimiento {
+  id_movimiento int [pk, increment, not null]
+  referencia varchar(50) [not null, unique]
+  tipo varchar(10) [not null]
+  fecha datetime [not null]
+  cantidad decimal(12,3) [not null]
+  id_declaracion int [not null]
+  id_producto int [not null]
+  id_bodega_origen int
+  id_bodega_destino int
+  estado_mercancia varchar(10) [not null]
+  id_funcionario int [not null]
+  observaciones varchar(250)
+}
+
+Table inspeccion {
+  id_inspeccion int [pk, increment, not null]
+  fecha datetime [not null]
+  resultado varchar(25) [not null]
+  observaciones varchar(300)
+  id_declaracion int [not null]
+  id_funcionario int [not null]
+}
+
+Ref: producto.id_partida > partida_arancelaria.id_partida
+Ref: funcionario.id_supervisor > funcionario.id_funcionario
+Ref: declaracion.id_importador > importador.id_importador
+Ref: declaracion.id_agente > agente_aduanal.id_agente
+Ref: declaracion.id_pais_origen > pais.id_pais
+Ref: detalle_declaracion.id_declaracion > declaracion.id_declaracion
+Ref: detalle_declaracion.id_producto > producto.id_producto
+Ref: contenedor.id_declaracion > declaracion.id_declaracion
+Ref: inventario.(id_declaracion, id_producto) > detalle_declaracion.(id_declaracion, id_producto)
+Ref: inventario.id_bodega > bodega.id_bodega
+Ref: movimiento.(id_declaracion, id_producto) > detalle_declaracion.(id_declaracion, id_producto)
+Ref: movimiento.id_bodega_origen > bodega.id_bodega
+Ref: movimiento.id_bodega_destino > bodega.id_bodega
+Ref: movimiento.id_funcionario > funcionario.id_funcionario
+Ref: inspeccion.id_declaracion > declaracion.id_declaracion
+Ref: inspeccion.id_funcionario > funcionario.id_funcionario

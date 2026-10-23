@@ -1,0 +1,72 @@
+{
+  "name": "Aduana Lab3 · Prueba aislada de entradas",
+  "active": false,
+  "nodes": [
+    {
+      "id": "2fe519f9-243c-5522-9c65-ffdef0ea22dd",
+      "name": "Ejecutar prueba",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "540e2490-1ab4-552e-a258-7e4b60eb5651",
+      "name": "Tres eventos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{json:{eventId:'evt-1',sessionId:'sesion-1',chatInput:'¿Qué stock queda?'}},{json:{eventId:'evt-1',sessionId:'sesion-1',chatInput:'¿Qué stock queda?'}},{json:{eventId:'evt-2',sessionId:'sesion-2',chatInput:42}}];"
+      }
+    },
+    {
+      "id": "dbb6c783-6111-57e8-96d2-a5c111ed9c13",
+      "name": "Verificar entradas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const seen = new Set();\nreturn $input.all().map(item => {\n const d = item.json;\n if (typeof d.chatInput !== 'string' || !d.chatInput.trim() || d.chatInput.length > 1200 || typeof d.sessionId !== 'string' || !/^[a-zA-Z0-9_-]{1,160}$/.test(d.sessionId) || typeof d.eventId !== 'string') return {json:{estado:'invalido'}};\n if (seen.has(d.eventId)) return {json:{eventId:d.eventId,estado:'duplicado_en_lote'}};\n seen.add(d.eventId); return {json:{eventId:d.eventId,estado:'valido',chatInput:d.chatInput.trim(),sessionId:d.sessionId}};\n});"
+      }
+    }
+  ],
+  "connections": {
+    "Ejecutar prueba": {
+      "main": [
+        [
+          {
+            "node": "Tres eventos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tres eventos": {
+      "main": [
+        [
+          {
+            "node": "Verificar entradas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

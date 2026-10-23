@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "titulo": "Declaraciones de importación en octubre de 2026",
+    "sql": "SELECT p.nombre AS pais_origen, COUNT(*) AS declaraciones\nFROM declaracion d JOIN pais p ON p.id_pais=d.id_pais_origen\nWHERE d.regimen='Importacion' AND d.fecha >= '2026-10-01' AND d.fecha < '2026-11-01'\nGROUP BY p.id_pais,p.nombre ORDER BY declaraciones DESC,p.nombre;"
+  },
+  {
+    "id": 2,
+    "titulo": "Mercancías retenidas y su origen por bodega",
+    "sql": "SELECT p.descripcion AS producto, pa.nombre AS pais_origen, b.nombre AS bodega, d.numero AS declaracion, i.cantidad\nFROM inventario i JOIN producto p ON p.id_producto=i.id_producto\nJOIN declaracion d ON d.id_declaracion=i.id_declaracion\nJOIN pais pa ON pa.id_pais=d.id_pais_origen JOIN bodega b ON b.id_bodega=i.id_bodega\nWHERE i.estado='Retenido' AND i.cantidad>0 ORDER BY b.nombre,p.descripcion,d.numero;"
+  },
+  {
+    "id": 3,
+    "titulo": "Países con más contenedores recibidos",
+    "sql": "SELECT p.nombre AS pais_origen, COUNT(c.id_contenedor) AS contenedores\nFROM contenedor c JOIN declaracion d ON d.id_declaracion=c.id_declaracion\nJOIN pais p ON p.id_pais=d.id_pais_origen GROUP BY p.id_pais,p.nombre\nORDER BY contenedores DESC,p.nombre;"
+  },
+  {
+    "id": 4,
+    "titulo": "Importadores con mayor valor total declarado en USD",
+    "sql": "SELECT i.razon_social, SUM(dd.valor_declarado) AS valor_total_usd\nFROM importador i JOIN declaracion d ON d.id_importador=i.id_importador\nJOIN detalle_declaracion dd ON dd.id_declaracion=d.id_declaracion\nGROUP BY i.id_importador,i.razon_social ORDER BY valor_total_usd DESC,i.razon_social;"
+  },
+  {
+    "id": 5,
+    "titulo": "Inspecciones con observaciones y su funcionario",
+    "sql": "SELECT d.numero AS declaracion, ins.fecha, f.nombre AS funcionario, ins.observaciones\nFROM inspeccion ins JOIN declaracion d ON d.id_declaracion=ins.id_declaracion\nJOIN v_funcionario_publico f ON f.id_funcionario=ins.id_funcionario\nWHERE ins.resultado='Con observaciones' ORDER BY ins.fecha DESC,ins.id_inspeccion DESC;"
+  },
+  {
+    "id": 6,
+    "titulo": "Stock del producto ADU-0001 en todas las bodegas",
+    "sql": "SELECT p.sku,p.descripcion,p.unidad_medida,b.nombre AS bodega,i.estado,SUM(i.cantidad) AS cantidad\nFROM inventario i JOIN producto p ON p.id_producto=i.id_producto\nJOIN bodega b ON b.id_bodega=i.id_bodega WHERE p.sku='ADU-0001'\nGROUP BY p.id_producto,p.sku,p.descripcion,p.unidad_medida,b.id_bodega,b.nombre,i.estado\nORDER BY b.nombre,i.estado;"
+  },
+  {
+    "id": 7,
+    "titulo": "Ocupación de bodegas en kilogramos y estado",
+    "sql": "SELECT b.nombre,i.estado,SUM(i.cantidad*p.peso_unitario_kg) AS peso_ocupado_kg,\n b.capacidad_peso_kg, ROUND(100*SUM(i.cantidad*p.peso_unitario_kg)/b.capacidad_peso_kg,2) AS porcentaje_capacidad\nFROM bodega b JOIN inventario i ON i.id_bodega=b.id_bodega\nJOIN producto p ON p.id_producto=i.id_producto\nGROUP BY b.id_bodega,b.nombre,b.capacidad_peso_kg,i.estado ORDER BY b.nombre,i.estado;"
+  },
+  {
+    "id": 8,
+    "titulo": "Movimientos de octubre de 2026 por tipo y producto",
+    "sql": "SELECT m.tipo,p.sku,p.descripcion,p.unidad_medida,COUNT(*) AS operaciones,SUM(m.cantidad) AS cantidad\nFROM movimiento m JOIN producto p ON p.id_producto=m.id_producto\nWHERE m.fecha>='2026-10-01' AND m.fecha<'2026-11-01'\nGROUP BY m.tipo,p.id_producto,p.sku,p.descripcion,p.unidad_medida ORDER BY m.tipo,p.sku;"
+  }
+]

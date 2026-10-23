@@ -1,0 +1,15 @@
+{
+  "pais": 15,
+  "importador": 15,
+  "agente_aduanal": 15,
+  "partida_arancelaria": 15,
+  "producto": 20,
+  "funcionario": 15,
+  "declaracion": 30,
+  "detalle_declaracion": 60,
+  "contenedor": 40,
+  "bodega": 15,
+  "inventario": 90,
+  "movimiento": 110,
+  "inspeccion": 25
+}

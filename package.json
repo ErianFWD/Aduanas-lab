@@ -1,0 +1,23 @@
+{
+  "name": "aduana-lab3",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build --workspace frontend",
+    "start": "npm start --workspace backend",
+    "db:import": "node scripts/import-database.mjs",
+    "db:users": "node scripts/create-db-users.mjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "test:integration": "node tests/integration.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

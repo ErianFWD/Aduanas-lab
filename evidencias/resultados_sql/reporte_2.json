@@ -1,0 +1,427 @@
+{
+  "id": 2,
+  "titulo": "Mercancías retenidas y su origen por bodega",
+  "sql": "SELECT p.descripcion AS producto, pa.nombre AS pais_origen, b.nombre AS bodega, d.numero AS declaracion, i.cantidad\nFROM inventario i JOIN producto p ON p.id_producto=i.id_producto\nJOIN declaracion d ON d.id_declaracion=i.id_declaracion\nJOIN pais pa ON pa.id_pais=d.id_pais_origen JOIN bodega b ON b.id_bodega=i.id_bodega\nWHERE i.estado='Retenido' AND i.cantidad>0 ORDER BY b.nombre,p.descripcion,d.numero;",
+  "rows": [
+    {
+      "producto": "Computadora portátil 14 pulgadas",
+      "pais_origen": "China",
+      "bodega": "Bodega 01",
+      "declaracion": "DUA-2026-0001",
+      "cantidad": 107
+    },
+    {
+      "producto": "Computadora portátil 14 pulgadas",
+      "pais_origen": "Perú",
+      "bodega": "Bodega 01",
+      "declaracion": "DUA-2026-0014",
+      "cantidad": 20
+    },
+    {
+      "producto": "Computadora portátil 16 pulgadas",
+      "pais_origen": "China",
+      "bodega": "Bodega 01",
+      "declaracion": "DUA-2026-0016",
+      "cantidad": 162
+    },
+    {
+      "producto": "Computadora portátil 16 pulgadas",
+      "pais_origen": "China",
+      "bodega": "Bodega 02",
+      "declaracion": "DUA-2026-0016",
+      "cantidad": 20
+    },
+    {
+      "producto": "Mesa de madera para comedor",
+      "pais_origen": "China",
+      "bodega": "Bodega 02",
+      "declaracion": "DUA-2026-0001",
+      "cantidad": 132
+    },
+    {
+      "producto": "Monitor LED 24 pulgadas",
+      "pais_origen": "China",
+      "bodega": "Bodega 02",
+      "declaracion": "DUA-2026-0016",
+      "cantidad": 187
+    },
+    {
+      "producto": "Teléfono inteligente 128 GB",
+      "pais_origen": "México",
+      "bodega": "Bodega 02",
+      "declaracion": "DUA-2026-0002",
+      "cantidad": 94
+    },
+    {
+      "producto": "Teléfono inteligente 256 GB",
+      "pais_origen": "México",
+      "bodega": "Bodega 02",
+      "declaracion": "DUA-2026-0017",
+      "cantidad": 219
+    },
+    {
+      "producto": "Monitor LED 24 pulgadas",
+      "pais_origen": "China",
+      "bodega": "Bodega 03",
+      "declaracion": "DUA-2026-0016",
+      "cantidad": 20
+    },
+    {
+      "producto": "Refrigerador 300 litros",
+      "pais_origen": "México",
+      "bodega": "Bodega 03",
+      "declaracion": "DUA-2026-0017",
+      "cantidad": 244
+    },
+    {
+      "producto": "Teléfono inteligente 128 GB",
+      "pais_origen": "México",
+      "bodega": "Bodega 03",
+      "declaracion": "DUA-2026-0002",
+      "cantidad": 20
+    },
+    {
+      "producto": "Tensiómetro digital",
+      "pais_origen": "México",
+      "bodega": "Bodega 03",
+      "declaracion": "DUA-2026-0002",
+      "cantidad": 119
+    },
+    {
+      "producto": "Camiseta de algodón talla L",
+      "pais_origen": "Costa Rica",
+      "bodega": "Bodega 04",
+      "declaracion": "DUA-2026-0019",
+      "cantidad": 233
+    },
+    {
+      "producto": "Refrigerador 300 litros",
+      "pais_origen": "Costa Rica",
+      "bodega": "Bodega 04",
+      "declaracion": "DUA-2026-0004",
+      "cantidad": 78
+    },
+    {
+      "producto": "Tensiómetro digital",
+      "pais_origen": "México",
+      "bodega": "Bodega 04",
+      "declaracion": "DUA-2026-0002",
+      "cantidad": 20
+    },
+    {
+      "producto": "Café verde en saco 25 kg",
+      "pais_origen": "Costa Rica",
+      "bodega": "Bodega 05",
+      "declaracion": "DUA-2026-0004",
+      "cantidad": 103
+    },
+    {
+      "producto": "Camiseta de algodón talla M",
+      "pais_origen": "Costa Rica",
+      "bodega": "Bodega 05",
+      "declaracion": "DUA-2026-0019",
+      "cantidad": 258
+    },
+    {
+      "producto": "Lavadora automática 12 kg",
+      "pais_origen": "Panamá",
+      "bodega": "Bodega 05",
+      "declaracion": "DUA-2026-0005",
+      "cantidad": 135
+    },
+    {
+      "producto": "Mesa auxiliar de madera",
+      "pais_origen": "Panamá",
+      "bodega": "Bodega 05",
+      "declaracion": "DUA-2026-0020",
+      "cantidad": 190
+    },
+    {
+      "producto": "Refrigerador 300 litros",
+      "pais_origen": "Costa Rica",
+      "bodega": "Bodega 05",
+      "declaracion": "DUA-2026-0004",
+      "cantidad": 20
+    },
+    {
+      "producto": "Arroz en saco 20 kg",
+      "pais_origen": "Panamá",
+      "bodega": "Bodega 06",
+      "declaracion": "DUA-2026-0005",
+      "cantidad": 160
+    },
+    {
+      "producto": "Café verde en saco 25 kg",
+      "pais_origen": "Costa Rica",
+      "bodega": "Bodega 06",
+      "declaracion": "DUA-2026-0004",
+      "cantidad": 20
+    },
+    {
+      "producto": "Mesa auxiliar de madera",
+      "pais_origen": "Panamá",
+      "bodega": "Bodega 06",
+      "declaracion": "DUA-2026-0020",
+      "cantidad": 20
+    },
+    {
+      "producto": "Zapatos de cuero talla 40",
+      "pais_origen": "Panamá",
+      "bodega": "Bodega 06",
+      "declaracion": "DUA-2026-0020",
+      "cantidad": 215
+    },
+    {
+      "producto": "Teléfono inteligente 128 GB",
+      "pais_origen": "Brasil",
+      "bodega": "Bodega 07",
+      "declaracion": "DUA-2026-0022",
+      "cantidad": 234
+    },
+    {
+      "producto": "Zapatos de cuero talla 40",
+      "pais_origen": "Brasil",
+      "bodega": "Bodega 07",
+      "declaracion": "DUA-2026-0007",
+      "cantidad": 149
+    },
+    {
+      "producto": "Zapatos de cuero talla 40",
+      "pais_origen": "Panamá",
+      "bodega": "Bodega 07",
+      "declaracion": "DUA-2026-0020",
+      "cantidad": 20
+    },
+    {
+      "producto": "Mesa de madera para comedor",
+      "pais_origen": "Alemania",
+      "bodega": "Bodega 08",
+      "declaracion": "DUA-2026-0008",
+      "cantidad": 106
+    },
+    {
+      "producto": "Monitor LED 24 pulgadas",
+      "pais_origen": "Alemania",
+      "bodega": "Bodega 08",
+      "declaracion": "DUA-2026-0023",
+      "cantidad": 261
+    },
+    {
+      "producto": "Neumático radial 205/55 R16",
+      "pais_origen": "Brasil",
+      "bodega": "Bodega 08",
+      "declaracion": "DUA-2026-0007",
+      "cantidad": 174
+    },
+    {
+      "producto": "Teléfono inteligente 128 GB",
+      "pais_origen": "Brasil",
+      "bodega": "Bodega 08",
+      "declaracion": "DUA-2026-0022",
+      "cantidad": 20
+    },
+    {
+      "producto": "Tensiómetro digital",
+      "pais_origen": "Brasil",
+      "bodega": "Bodega 08",
+      "declaracion": "DUA-2026-0022",
+      "cantidad": 259
+    },
+    {
+      "producto": "Filtro doméstico de agua",
+      "pais_origen": "Alemania",
+      "bodega": "Bodega 09",
+      "declaracion": "DUA-2026-0008",
+      "cantidad": 131
+    },
+    {
+      "producto": "Juego de bloques educativos",
+      "pais_origen": "Alemania",
+      "bodega": "Bodega 09",
+      "declaracion": "DUA-2026-0023",
+      "cantidad": 286
+    },
+    {
+      "producto": "Mesa de madera para comedor",
+      "pais_origen": "Alemania",
+      "bodega": "Bodega 09",
+      "declaracion": "DUA-2026-0008",
+      "cantidad": 20
+    },
+    {
+      "producto": "Tensiómetro digital",
+      "pais_origen": "Brasil",
+      "bodega": "Bodega 09",
+      "declaracion": "DUA-2026-0022",
+      "cantidad": 20
+    },
+    {
+      "producto": "Filtro doméstico de agua",
+      "pais_origen": "Alemania",
+      "bodega": "Bodega 10",
+      "declaracion": "DUA-2026-0008",
+      "cantidad": 20
+    },
+    {
+      "producto": "Juego de bloques educativos",
+      "pais_origen": "Japón",
+      "bodega": "Bodega 10",
+      "declaracion": "DUA-2026-0010",
+      "cantidad": 150
+    },
+    {
+      "producto": "Lavadora automática 12 kg",
+      "pais_origen": "Japón",
+      "bodega": "Bodega 10",
+      "declaracion": "DUA-2026-0025",
+      "cantidad": 275
+    },
+    {
+      "producto": "Arroz en saco 20 kg",
+      "pais_origen": "Japón",
+      "bodega": "Bodega 11",
+      "declaracion": "DUA-2026-0025",
+      "cantidad": 300
+    },
+    {
+      "producto": "Café verde en saco 25 kg",
+      "pais_origen": "Corea del Sur",
+      "bodega": "Bodega 11",
+      "declaracion": "DUA-2026-0011",
+      "cantidad": 177
+    },
+    {
+      "producto": "Camiseta de algodón talla M",
+      "pais_origen": "Corea del Sur",
+      "bodega": "Bodega 11",
+      "declaracion": "DUA-2026-0026",
+      "cantidad": 262
+    },
+    {
+      "producto": "Juego de bloques educativos",
+      "pais_origen": "Japón",
+      "bodega": "Bodega 11",
+      "declaracion": "DUA-2026-0010",
+      "cantidad": 20
+    },
+    {
+      "producto": "Teléfono inteligente 256 GB",
+      "pais_origen": "Japón",
+      "bodega": "Bodega 11",
+      "declaracion": "DUA-2026-0010",
+      "cantidad": 175
+    },
+    {
+      "producto": "Camiseta de algodón talla M",
+      "pais_origen": "Corea del Sur",
+      "bodega": "Bodega 12",
+      "declaracion": "DUA-2026-0026",
+      "cantidad": 20
+    },
+    {
+      "producto": "Cargador USB-C 65 W",
+      "pais_origen": "Corea del Sur",
+      "bodega": "Bodega 12",
+      "declaracion": "DUA-2026-0026",
+      "cantidad": 287
+    },
+    {
+      "producto": "Monitor LED 27 pulgadas",
+      "pais_origen": "Corea del Sur",
+      "bodega": "Bodega 12",
+      "declaracion": "DUA-2026-0011",
+      "cantidad": 202
+    },
+    {
+      "producto": "Teléfono inteligente 256 GB",
+      "pais_origen": "Japón",
+      "bodega": "Bodega 12",
+      "declaracion": "DUA-2026-0010",
+      "cantidad": 20
+    },
+    {
+      "producto": "Cargador USB-C 65 W",
+      "pais_origen": "Chile",
+      "bodega": "Bodega 13",
+      "declaracion": "DUA-2026-0013",
+      "cantidad": 191
+    },
+    {
+      "producto": "Cargador USB-C 65 W",
+      "pais_origen": "Corea del Sur",
+      "bodega": "Bodega 13",
+      "declaracion": "DUA-2026-0026",
+      "cantidad": 20
+    },
+    {
+      "producto": "Mesa de madera para comedor",
+      "pais_origen": "Chile",
+      "bodega": "Bodega 13",
+      "declaracion": "DUA-2026-0028",
+      "cantidad": 246
+    },
+    {
+      "producto": "Filtro doméstico de agua",
+      "pais_origen": "Chile",
+      "bodega": "Bodega 14",
+      "declaracion": "DUA-2026-0028",
+      "cantidad": 271
+    },
+    {
+      "producto": "Mesa auxiliar de madera",
+      "pais_origen": "Chile",
+      "bodega": "Bodega 14",
+      "declaracion": "DUA-2026-0013",
+      "cantidad": 216
+    },
+    {
+      "producto": "Mesa de madera para comedor",
+      "pais_origen": "Chile",
+      "bodega": "Bodega 14",
+      "declaracion": "DUA-2026-0028",
+      "cantidad": 20
+    },
+    {
+      "producto": "Neumático radial 205/55 R16",
+      "pais_origen": "Perú",
+      "bodega": "Bodega 14",
+      "declaracion": "DUA-2026-0014",
+      "cantidad": 178
+    },
+    {
+      "producto": "Tensiómetro digital",
+      "pais_origen": "Perú",
+      "bodega": "Bodega 14",
+      "declaracion": "DUA-2026-0029",
+      "cantidad": 303
+    },
+    {
+      "producto": "Computadora portátil 14 pulgadas",
+      "pais_origen": "Perú",
+      "bodega": "Bodega 15",
+      "declaracion": "DUA-2026-0014",
+      "cantidad": 203
+    },
+    {
+      "producto": "Computadora portátil 16 pulgadas",
+      "pais_origen": "Perú",
+      "bodega": "Bodega 15",
+      "declaracion": "DUA-2026-0029",
+      "cantidad": 328
+    },
+    {
+      "producto": "Filtro doméstico de agua",
+      "pais_origen": "Chile",
+      "bodega": "Bodega 15",
+      "declaracion": "DUA-2026-0028",
+      "cantidad": 20
+    },
+    {
+      "producto": "Neumático radial 205/55 R16",
+      "pais_origen": "Perú",
+      "bodega": "Bodega 15",
+      "declaracion": "DUA-2026-0014",
+      "cantidad": 20
+    }
+  ]
+}

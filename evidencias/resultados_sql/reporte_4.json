@@ -1,0 +1,67 @@
+{
+  "id": 4,
+  "titulo": "Importadores con mayor valor total declarado en USD",
+  "sql": "SELECT i.razon_social, SUM(dd.valor_declarado) AS valor_total_usd\nFROM importador i JOIN declaracion d ON d.id_importador=i.id_importador\nJOIN detalle_declaracion dd ON dd.id_declaracion=d.id_declaracion\nGROUP BY i.id_importador,i.razon_social ORDER BY valor_total_usd DESC,i.razon_social;",
+  "rows": [
+    {
+      "razon_social": "Insumos Ceiba S.A.",
+      "valor_total_usd": 443730
+    },
+    {
+      "razon_social": "Equipo Industrial Norte S.A.",
+      "valor_total_usd": 313125
+    },
+    {
+      "razon_social": "Horizonte Comercial S.A.",
+      "valor_total_usd": 311430
+    },
+    {
+      "razon_social": "Tecnología Volcán S.A.",
+      "valor_total_usd": 213151
+    },
+    {
+      "razon_social": "Pacífico Importaciones S.A.",
+      "valor_total_usd": 211410
+    },
+    {
+      "razon_social": "Distribuidora Litoral S.A.",
+      "valor_total_usd": 175540
+    },
+    {
+      "razon_social": "Comercial Río Claro S.A.",
+      "valor_total_usd": 175345
+    },
+    {
+      "razon_social": "Suministros Valle Central S.A.",
+      "valor_total_usd": 163952
+    },
+    {
+      "razon_social": "Almacenes Aurora S.A.",
+      "valor_total_usd": 86790
+    },
+    {
+      "razon_social": "Agroinsumos Brisa S.A.",
+      "valor_total_usd": 84115
+    },
+    {
+      "razon_social": "Mercantil Roble S.A.",
+      "valor_total_usd": 82095
+    },
+    {
+      "razon_social": "Textiles Colibrí S.A.",
+      "valor_total_usd": 81417
+    },
+    {
+      "razon_social": "Soluciones del Caribe S.A.",
+      "valor_total_usd": 76296
+    },
+    {
+      "razon_social": "Comercio Monteverde S.A.",
+      "valor_total_usd": 66096
+    },
+    {
+      "razon_social": "Casa Logística Sur S.A.",
+      "valor_total_usd": 33314
+    }
+  ]
+}

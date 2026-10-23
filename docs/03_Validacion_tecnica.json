@@ -1,0 +1,102 @@
+{
+  "fecha": "2026-10-23T15:43:17.198Z",
+  "motor": "MySQL 8.4.13 · instancia temporal propia",
+  "pruebas": [
+    {
+      "prueba": "Script SQL completo: creación, datos y ocho consultas",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "13 tablas con al menos 15 registros cada una",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Rechazo de llaves foráneas inexistentes y cantidades negativas",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Saldo de inventario conciliado contra todos los movimientos",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Fechas de inspección posteriores o iguales a sus declaraciones",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Usuario n8n: permite SELECT y rechaza escritura y lectura de contraseñas",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "API privada: rechaza solicitudes sin sesión y credenciales incorrectas",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Login real para administración, operación y consulta",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Permisos de rol: consulta no registra movimientos ni ve usuarios",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Todas las pantallas reciben datos de MySQL",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Ocho reportes ejecutables con resultados reales",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Filtros parametrizados y paginación",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Movimiento válido modifica origen, destino e historial",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Reintento duplicado no duplica existencias ni movimientos",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Reutilizar referencia con otro contenido devuelve conflicto",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Cantidad excesiva falla y conserva el saldo anterior",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Ingreso parcial válido y rechazo de sobreingreso",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Rollback completo si la bodega destino no existe",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Dos traslados concurrentes no retiran más que el stock disponible",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Capacidad insuficiente revierte el movimiento completo",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Asistente sin configuración informa que n8n está pendiente",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Logout revoca el token anterior en el servidor",
+      "resultado": "OK"
+    },
+    {
+      "prueba": "Cambio de contraseña invalida sesiones y acepta la nueva clave",
+      "resultado": "OK"
+    }
+  ],
+  "agente_llm_verificado": false,
+  "interfaz": "Login y panel revisados visualmente en navegador; inventario cargado desde MySQL. Sesión aislada de QA, con autenticación real probada por separado en la API.",
+  "pruebas_unitarias": 9,
+  "build_react": "vite 7.3.7: correcto; fuentes servidas localmente"
+}

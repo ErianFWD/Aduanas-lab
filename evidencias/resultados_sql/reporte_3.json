@@ -1,0 +1,67 @@
+{
+  "id": 3,
+  "titulo": "Países con más contenedores recibidos",
+  "sql": "SELECT p.nombre AS pais_origen, COUNT(c.id_contenedor) AS contenedores\nFROM contenedor c JOIN declaracion d ON d.id_declaracion=c.id_declaracion\nJOIN pais p ON p.id_pais=d.id_pais_origen GROUP BY p.id_pais,p.nombre\nORDER BY contenedores DESC,p.nombre;",
+  "rows": [
+    {
+      "pais_origen": "Alemania",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "Brasil",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "China",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "Colombia",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "Costa Rica",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "España",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "Estados Unidos",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "Japón",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "México",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "Panamá",
+      "contenedores": 3
+    },
+    {
+      "pais_origen": "Canadá",
+      "contenedores": 2
+    },
+    {
+      "pais_origen": "Chile",
+      "contenedores": 2
+    },
+    {
+      "pais_origen": "Corea del Sur",
+      "contenedores": 2
+    },
+    {
+      "pais_origen": "Guatemala",
+      "contenedores": 2
+    },
+    {
+      "pais_origen": "Perú",
+      "contenedores": 2
+    }
+  ]
+}

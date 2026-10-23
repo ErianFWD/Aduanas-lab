@@ -1,0 +1,471 @@
+{
+  "id": 8,
+  "titulo": "Movimientos de octubre de 2026 por tipo y producto",
+  "sql": "SELECT m.tipo,p.sku,p.descripcion,p.unidad_medida,COUNT(*) AS operaciones,SUM(m.cantidad) AS cantidad\nFROM movimiento m JOIN producto p ON p.id_producto=m.id_producto\nWHERE m.fecha>='2026-10-01' AND m.fecha<'2026-11-01'\nGROUP BY m.tipo,p.id_producto,p.sku,p.descripcion,p.unidad_medida ORDER BY m.tipo,p.sku;",
+  "rows": [
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0001",
+      "descripcion": "Computadora portátil 14 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 470
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0002",
+      "descripcion": "Teléfono inteligente 128 GB",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 484
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0003",
+      "descripcion": "Monitor LED 24 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 468
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0004",
+      "descripcion": "Refrigerador 300 litros",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 482
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0005",
+      "descripcion": "Lavadora automática 12 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 661
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0006",
+      "descripcion": "Camiseta de algodón talla M",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 682
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0007",
+      "descripcion": "Zapatos de cuero talla 40",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 673
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0008",
+      "descripcion": "Mesa de madera para comedor",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 664
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0009",
+      "descripcion": "Tensiómetro digital",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 745
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0010",
+      "descripcion": "Juego de bloques educativos",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 766
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0011",
+      "descripcion": "Café verde en saco 25 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 440
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0012",
+      "descripcion": "Arroz en saco 20 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 614
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0013",
+      "descripcion": "Cargador USB-C 65 W",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 665
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0014",
+      "descripcion": "Neumático radial 205/55 R16",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 686
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0015",
+      "descripcion": "Filtro doméstico de agua",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 647
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0016",
+      "descripcion": "Computadora portátil 16 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 698
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0017",
+      "descripcion": "Teléfono inteligente 256 GB",
+      "unidad_medida": "unidad",
+      "operaciones": 3,
+      "cantidad": 749
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0018",
+      "descripcion": "Monitor LED 27 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 428
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0019",
+      "descripcion": "Camiseta de algodón talla L",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 412
+    },
+    {
+      "tipo": "Entrada",
+      "sku": "ADU-0020",
+      "descripcion": "Mesa auxiliar de madera",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 426
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0001",
+      "descripcion": "Computadora portátil 14 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0002",
+      "descripcion": "Teléfono inteligente 128 GB",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0004",
+      "descripcion": "Refrigerador 300 litros",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0005",
+      "descripcion": "Lavadora automática 12 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0006",
+      "descripcion": "Camiseta de algodón talla M",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0007",
+      "descripcion": "Zapatos de cuero talla 40",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0008",
+      "descripcion": "Mesa de madera para comedor",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0009",
+      "descripcion": "Tensiómetro digital",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0010",
+      "descripcion": "Juego de bloques educativos",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0011",
+      "descripcion": "Café verde en saco 25 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0012",
+      "descripcion": "Arroz en saco 20 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0013",
+      "descripcion": "Cargador USB-C 65 W",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0014",
+      "descripcion": "Neumático radial 205/55 R16",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0015",
+      "descripcion": "Filtro doméstico de agua",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0016",
+      "descripcion": "Computadora portátil 16 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0017",
+      "descripcion": "Teléfono inteligente 256 GB",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0018",
+      "descripcion": "Monitor LED 27 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Salida",
+      "sku": "ADU-0019",
+      "descripcion": "Camiseta de algodón talla L",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 10
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0001",
+      "descripcion": "Computadora portátil 14 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0002",
+      "descripcion": "Teléfono inteligente 128 GB",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0003",
+      "descripcion": "Monitor LED 24 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0004",
+      "descripcion": "Refrigerador 300 litros",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0005",
+      "descripcion": "Lavadora automática 12 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0006",
+      "descripcion": "Camiseta de algodón talla M",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 40
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0007",
+      "descripcion": "Zapatos de cuero talla 40",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0008",
+      "descripcion": "Mesa de madera para comedor",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 40
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0009",
+      "descripcion": "Tensiómetro digital",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0010",
+      "descripcion": "Juego de bloques educativos",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 40
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0011",
+      "descripcion": "Café verde en saco 25 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0012",
+      "descripcion": "Arroz en saco 20 kg",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0013",
+      "descripcion": "Cargador USB-C 65 W",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 40
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0014",
+      "descripcion": "Neumático radial 205/55 R16",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0015",
+      "descripcion": "Filtro doméstico de agua",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 40
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0016",
+      "descripcion": "Computadora portátil 16 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0017",
+      "descripcion": "Teléfono inteligente 256 GB",
+      "unidad_medida": "unidad",
+      "operaciones": 2,
+      "cantidad": 40
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0018",
+      "descripcion": "Monitor LED 27 pulgadas",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0019",
+      "descripcion": "Camiseta de algodón talla L",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    },
+    {
+      "tipo": "Traslado",
+      "sku": "ADU-0020",
+      "descripcion": "Mesa auxiliar de madera",
+      "unidad_medida": "unidad",
+      "operaciones": 1,
+      "cantidad": 20
+    }
+  ]
+}

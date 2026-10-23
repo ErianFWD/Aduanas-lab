@@ -1,0 +1,31 @@
+{
+  "id": 1,
+  "titulo": "Declaraciones de importación en octubre de 2026",
+  "sql": "SELECT p.nombre AS pais_origen, COUNT(*) AS declaraciones\nFROM declaracion d JOIN pais p ON p.id_pais=d.id_pais_origen\nWHERE d.regimen='Importacion' AND d.fecha >= '2026-10-01' AND d.fecha < '2026-11-01'\nGROUP BY p.id_pais,p.nombre ORDER BY declaraciones DESC,p.nombre;",
+  "rows": [
+    {
+      "pais_origen": "Brasil",
+      "declaraciones": 2
+    },
+    {
+      "pais_origen": "Canadá",
+      "declaraciones": 2
+    },
+    {
+      "pais_origen": "Colombia",
+      "declaraciones": 2
+    },
+    {
+      "pais_origen": "Corea del Sur",
+      "declaraciones": 2
+    },
+    {
+      "pais_origen": "China",
+      "declaraciones": 1
+    },
+    {
+      "pais_origen": "México",
+      "declaraciones": 1
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": 6,
+  "titulo": "Stock del producto ADU-0001 en todas las bodegas",
+  "sql": "SELECT p.sku,p.descripcion,p.unidad_medida,b.nombre AS bodega,i.estado,SUM(i.cantidad) AS cantidad\nFROM inventario i JOIN producto p ON p.id_producto=i.id_producto\nJOIN bodega b ON b.id_bodega=i.id_bodega WHERE p.sku='ADU-0001'\nGROUP BY p.id_producto,p.sku,p.descripcion,p.unidad_medida,b.id_bodega,b.nombre,i.estado\nORDER BY b.nombre,i.estado;",
+  "rows": [
+    {
+      "sku": "ADU-0001",
+      "descripcion": "Computadora portátil 14 pulgadas",
+      "unidad_medida": "unidad",
+      "bodega": "Bodega 01",
+      "estado": "Retenido",
+      "cantidad": 127
+    },
+    {
+      "sku": "ADU-0001",
+      "descripcion": "Computadora portátil 14 pulgadas",
+      "unidad_medida": "unidad",
+      "bodega": "Bodega 06",
+      "estado": "Liberado",
+      "cantidad": 237
+    },
+    {
+      "sku": "ADU-0001",
+      "descripcion": "Computadora portátil 14 pulgadas",
+      "unidad_medida": "unidad",
+      "bodega": "Bodega 15",
+      "estado": "Retenido",
+      "cantidad": 203
+    }
+  ]
+}

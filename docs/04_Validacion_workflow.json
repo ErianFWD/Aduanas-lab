@@ -1,0 +1,8 @@
+{
+  "estructura": "ambos JSON válidos",
+  "pruebas_codigo": "entrada válida, entrada inválida y duplicado dentro de un lote",
+  "runtime_n8n": false,
+  "modelo_llm": false,
+  "version_esquemas": "n8n 2.44.6; Agent 2.2; Chat Trigger 1.3; MySQL 2.5; Simple Memory 1.3",
+  "seguridad_sql": "SELECT limitada exteriormente a 100 filas; filtro textual y cuenta de solo lectura. Pruebas de rechazo y fixture correctas."
+}

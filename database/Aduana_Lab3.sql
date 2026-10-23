@@ -1,0 +1,732 @@
+-- Laboratorio #3 | Inventario aduanero | MySQL 8.4
+-- Integrantes: COMPLETAR NOMBRES Y APELLIDOS
+-- Fecha de preparación: 2026-10-23
+-- Datos sintéticos con fines educativos; importes en USD.
+
+CREATE DATABASE IF NOT EXISTS aduana_lab3 CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+USE aduana_lab3;
+SET NAMES utf8mb4;
+
+CREATE TABLE pais (
+  id_pais INT AUTO_INCREMENT,
+  nombre VARCHAR(60) NOT NULL UNIQUE,
+  codigo_iso CHAR(2) NOT NULL UNIQUE,
+  PRIMARY KEY (id_pais)
+) ENGINE=InnoDB;
+
+CREATE TABLE importador (
+  id_importador INT AUTO_INCREMENT,
+  razon_social VARCHAR(120) NOT NULL,
+  identificacion VARCHAR(25) NOT NULL UNIQUE,
+  direccion VARCHAR(200) NOT NULL,
+  telefono VARCHAR(25) NOT NULL,
+  correo VARCHAR(120) NOT NULL UNIQUE,
+  PRIMARY KEY (id_importador)
+) ENGINE=InnoDB;
+
+CREATE TABLE agente_aduanal (
+  id_agente INT AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  licencia VARCHAR(25) NOT NULL UNIQUE,
+  telefono VARCHAR(25) NOT NULL,
+  PRIMARY KEY (id_agente)
+) ENGINE=InnoDB;
+
+CREATE TABLE partida_arancelaria (
+  id_partida INT AUTO_INCREMENT,
+  codigo VARCHAR(12) NOT NULL UNIQUE,
+  descripcion VARCHAR(180) NOT NULL,
+  porcentaje_arancel DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (porcentaje_arancel BETWEEN 0 AND 100),
+  PRIMARY KEY (id_partida)
+) ENGINE=InnoDB;
+
+CREATE TABLE producto (
+  id_producto INT AUTO_INCREMENT,
+  sku VARCHAR(30) NOT NULL UNIQUE,
+  descripcion VARCHAR(140) NOT NULL,
+  unidad_medida VARCHAR(15) NOT NULL DEFAULT 'unidad',
+  valor_referencia DECIMAL(14,2) NOT NULL CHECK (valor_referencia >= 0),
+  peso_unitario_kg DECIMAL(12,3) NOT NULL CHECK (peso_unitario_kg > 0),
+  id_partida INT NOT NULL,
+  PRIMARY KEY (id_producto),
+  CONSTRAINT fk_producto_0 FOREIGN KEY (id_partida) REFERENCES partida_arancelaria (id_partida) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE funcionario (
+  id_funcionario INT NOT NULL,
+  nombre VARCHAR(100) NOT NULL,
+  cargo VARCHAR(60) NOT NULL,
+  id_supervisor INT NULL,
+  correo VARCHAR(120) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  rol VARCHAR(15) NOT NULL DEFAULT 'consulta' CHECK (rol IN ('admin','operador','consulta')),
+  activo BOOLEAN NOT NULL DEFAULT TRUE,
+  session_version INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id_funcionario),
+  CONSTRAINT fk_funcionario_1 FOREIGN KEY (id_supervisor) REFERENCES funcionario (id_funcionario) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT chk_no_autosupervision CHECK (id_supervisor IS NULL OR id_supervisor <> id_funcionario)
+) ENGINE=InnoDB;
+
+CREATE TABLE declaracion (
+  id_declaracion INT AUTO_INCREMENT,
+  numero VARCHAR(25) NOT NULL UNIQUE,
+  fecha DATE NOT NULL,
+  regimen VARCHAR(15) NOT NULL CHECK (regimen IN ('Importacion','Exportacion','Transito','Deposito')),
+  estado VARCHAR(20) NOT NULL DEFAULT 'Registrada' CHECK (estado IN ('Registrada','En inspeccion','Retenida','Liberada','Cerrada')),
+  moneda CHAR(3) NOT NULL DEFAULT 'USD' CHECK (moneda = 'USD'),
+  id_importador INT NOT NULL,
+  id_agente INT NOT NULL,
+  id_pais_origen INT NOT NULL,
+  PRIMARY KEY (id_declaracion),
+  CONSTRAINT fk_declaracion_2 FOREIGN KEY (id_importador) REFERENCES importador (id_importador) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_declaracion_3 FOREIGN KEY (id_agente) REFERENCES agente_aduanal (id_agente) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_declaracion_4 FOREIGN KEY (id_pais_origen) REFERENCES pais (id_pais) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE detalle_declaracion (
+  id_declaracion INT NOT NULL,
+  id_producto INT NOT NULL,
+  cantidad DECIMAL(12,3) NOT NULL CHECK (cantidad > 0),
+  valor_declarado DECIMAL(14,2) NOT NULL CHECK (valor_declarado >= 0),
+  PRIMARY KEY (id_declaracion, id_producto),
+  CONSTRAINT fk_detalle_declaracion_5 FOREIGN KEY (id_declaracion) REFERENCES declaracion (id_declaracion) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_detalle_declaracion_6 FOREIGN KEY (id_producto) REFERENCES producto (id_producto) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE contenedor (
+  id_contenedor INT AUTO_INCREMENT,
+  numero VARCHAR(15) NOT NULL UNIQUE,
+  tipo VARCHAR(25) NOT NULL,
+  peso_bruto_kg DECIMAL(12,3) NOT NULL CHECK (peso_bruto_kg > 0),
+  id_declaracion INT NOT NULL,
+  PRIMARY KEY (id_contenedor),
+  CONSTRAINT fk_contenedor_7 FOREIGN KEY (id_declaracion) REFERENCES declaracion (id_declaracion) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE bodega (
+  id_bodega INT AUTO_INCREMENT,
+  nombre VARCHAR(80) NOT NULL UNIQUE,
+  ubicacion VARCHAR(160) NOT NULL,
+  capacidad_peso_kg DECIMAL(14,3) NOT NULL CHECK (capacidad_peso_kg > 0),
+  PRIMARY KEY (id_bodega)
+) ENGINE=InnoDB;
+
+CREATE TABLE inventario (
+  id_inventario INT AUTO_INCREMENT,
+  id_declaracion INT NOT NULL,
+  id_producto INT NOT NULL,
+  id_bodega INT NOT NULL,
+  cantidad DECIMAL(12,3) NOT NULL DEFAULT 0 CHECK (cantidad >= 0),
+  fecha_ingreso DATE NOT NULL,
+  estado VARCHAR(10) NOT NULL DEFAULT 'Retenido' CHECK (estado IN ('Retenido','Liberado')),
+  PRIMARY KEY (id_inventario),
+  CONSTRAINT fk_inventario_8 FOREIGN KEY (id_declaracion, id_producto) REFERENCES detalle_declaracion (id_declaracion, id_producto) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_inventario_9 FOREIGN KEY (id_bodega) REFERENCES bodega (id_bodega) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT uq_existencia UNIQUE (id_declaracion, id_producto, id_bodega, estado)
+) ENGINE=InnoDB;
+
+CREATE TABLE movimiento (
+  id_movimiento INT AUTO_INCREMENT,
+  referencia VARCHAR(50) NOT NULL UNIQUE,
+  tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('Entrada','Salida','Traslado')),
+  fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cantidad DECIMAL(12,3) NOT NULL CHECK (cantidad > 0),
+  id_declaracion INT NOT NULL,
+  id_producto INT NOT NULL,
+  id_bodega_origen INT NULL,
+  id_bodega_destino INT NULL,
+  estado_mercancia VARCHAR(10) NOT NULL CHECK (estado_mercancia IN ('Retenido','Liberado')),
+  id_funcionario INT NOT NULL,
+  observaciones VARCHAR(250) NULL,
+  PRIMARY KEY (id_movimiento),
+  CONSTRAINT fk_movimiento_10 FOREIGN KEY (id_declaracion, id_producto) REFERENCES detalle_declaracion (id_declaracion, id_producto) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_movimiento_11 FOREIGN KEY (id_bodega_origen) REFERENCES bodega (id_bodega) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_movimiento_12 FOREIGN KEY (id_bodega_destino) REFERENCES bodega (id_bodega) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_movimiento_13 FOREIGN KEY (id_funcionario) REFERENCES funcionario (id_funcionario) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT chk_bodegas_movimiento CHECK ((tipo = 'Entrada' AND id_bodega_origen IS NULL AND id_bodega_destino IS NOT NULL) OR (tipo = 'Salida' AND id_bodega_origen IS NOT NULL AND id_bodega_destino IS NULL) OR (tipo = 'Traslado' AND id_bodega_origen IS NOT NULL AND id_bodega_destino IS NOT NULL AND id_bodega_origen <> id_bodega_destino)),
+  CONSTRAINT chk_salida_liberada CHECK (tipo <> 'Salida' OR estado_mercancia = 'Liberado')
+) ENGINE=InnoDB;
+
+CREATE TABLE inspeccion (
+  id_inspeccion INT AUTO_INCREMENT,
+  fecha DATETIME NOT NULL,
+  resultado VARCHAR(25) NOT NULL CHECK (resultado IN ('Aprobada','Con observaciones','Rechazada')),
+  observaciones VARCHAR(300) NULL,
+  id_declaracion INT NOT NULL,
+  id_funcionario INT NOT NULL,
+  PRIMARY KEY (id_inspeccion),
+  CONSTRAINT fk_inspeccion_14 FOREIGN KEY (id_declaracion) REFERENCES declaracion (id_declaracion) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_inspeccion_15 FOREIGN KEY (id_funcionario) REFERENCES funcionario (id_funcionario) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE VIEW v_funcionario_publico AS
+SELECT id_funcionario, nombre, cargo, id_supervisor FROM funcionario;
+
+-- Laboratorio #3 | Inventario aduanero | MySQL 8.4
+-- Integrantes: COMPLETAR NOMBRES Y APELLIDOS
+-- Fecha de preparación: 2026-10-23
+-- Datos sintéticos con fines educativos; importes en USD.
+
+USE aduana_lab3;
+START TRANSACTION;
+
+-- pais: 15 registros
+INSERT INTO pais (id_pais, nombre, codigo_iso) VALUES
+(1, 'China', 'CN'),
+(2, 'México', 'MX'),
+(3, 'Estados Unidos', 'US'),
+(4, 'Costa Rica', 'CR'),
+(5, 'Panamá', 'PA'),
+(6, 'Colombia', 'CO'),
+(7, 'Brasil', 'BR'),
+(8, 'Alemania', 'DE'),
+(9, 'España', 'ES'),
+(10, 'Japón', 'JP'),
+(11, 'Corea del Sur', 'KR'),
+(12, 'Canadá', 'CA'),
+(13, 'Chile', 'CL'),
+(14, 'Perú', 'PE'),
+(15, 'Guatemala', 'GT');
+
+-- importador: 15 registros
+INSERT INTO importador (id_importador, razon_social, identificacion, direccion, telefono, correo) VALUES
+(1, 'Horizonte Comercial S.A.', 'SIM-CR-0001', 'Zona empresarial, edificio 1, Costa Rica', '2200-1001', 'contacto1@importador.example'),
+(2, 'Pacífico Importaciones S.A.', 'SIM-CR-0002', 'Zona empresarial, edificio 2, Costa Rica', '2200-1002', 'contacto2@importador.example'),
+(3, 'Suministros Valle Central S.A.', 'SIM-CR-0003', 'Zona empresarial, edificio 3, Costa Rica', '2200-1003', 'contacto3@importador.example'),
+(4, 'Soluciones del Caribe S.A.', 'SIM-CR-0004', 'Zona empresarial, edificio 4, Costa Rica', '2200-1004', 'contacto4@importador.example'),
+(5, 'Mercantil Roble S.A.', 'SIM-CR-0005', 'Zona empresarial, edificio 5, Costa Rica', '2200-1005', 'contacto5@importador.example'),
+(6, 'Tecnología Volcán S.A.', 'SIM-CR-0006', 'Zona empresarial, edificio 6, Costa Rica', '2200-1006', 'contacto6@importador.example'),
+(7, 'Agroinsumos Brisa S.A.', 'SIM-CR-0007', 'Zona empresarial, edificio 7, Costa Rica', '2200-1007', 'contacto7@importador.example'),
+(8, 'Textiles Colibrí S.A.', 'SIM-CR-0008', 'Zona empresarial, edificio 8, Costa Rica', '2200-1008', 'contacto8@importador.example'),
+(9, 'Equipo Industrial Norte S.A.', 'SIM-CR-0009', 'Zona empresarial, edificio 9, Costa Rica', '2200-1009', 'contacto9@importador.example'),
+(10, 'Distribuidora Litoral S.A.', 'SIM-CR-0010', 'Zona empresarial, edificio 10, Costa Rica', '2200-1010', 'contacto10@importador.example'),
+(11, 'Comercio Monteverde S.A.', 'SIM-CR-0011', 'Zona empresarial, edificio 11, Costa Rica', '2200-1011', 'contacto11@importador.example'),
+(12, 'Casa Logística Sur S.A.', 'SIM-CR-0012', 'Zona empresarial, edificio 12, Costa Rica', '2200-1012', 'contacto12@importador.example'),
+(13, 'Almacenes Aurora S.A.', 'SIM-CR-0013', 'Zona empresarial, edificio 13, Costa Rica', '2200-1013', 'contacto13@importador.example'),
+(14, 'Insumos Ceiba S.A.', 'SIM-CR-0014', 'Zona empresarial, edificio 14, Costa Rica', '2200-1014', 'contacto14@importador.example'),
+(15, 'Comercial Río Claro S.A.', 'SIM-CR-0015', 'Zona empresarial, edificio 15, Costa Rica', '2200-1015', 'contacto15@importador.example');
+
+-- agente_aduanal: 15 registros
+INSERT INTO agente_aduanal (id_agente, nombre, licencia, telefono) VALUES
+(1, 'Laura Campos', 'LIC-DEMO-001', '2400-2001'),
+(2, 'Diego Solís', 'LIC-DEMO-002', '2400-2002'),
+(3, 'Ana Mora', 'LIC-DEMO-003', '2400-2003'),
+(4, 'José Vargas', 'LIC-DEMO-004', '2400-2004'),
+(5, 'Sofía Rojas', 'LIC-DEMO-005', '2400-2005'),
+(6, 'Andrés León', 'LIC-DEMO-006', '2400-2006'),
+(7, 'María Quesada', 'LIC-DEMO-007', '2400-2007'),
+(8, 'Carlos Chaves', 'LIC-DEMO-008', '2400-2008'),
+(9, 'Valeria Soto', 'LIC-DEMO-009', '2400-2009'),
+(10, 'Daniel Núñez', 'LIC-DEMO-010', '2400-2010'),
+(11, 'Lucía Arias', 'LIC-DEMO-011', '2400-2011'),
+(12, 'Pablo Jiménez', 'LIC-DEMO-012', '2400-2012'),
+(13, 'Elena Salas', 'LIC-DEMO-013', '2400-2013'),
+(14, 'Gabriel Cordero', 'LIC-DEMO-014', '2400-2014'),
+(15, 'Natalia Castro', 'LIC-DEMO-015', '2400-2015');
+
+-- partida_arancelaria: 15 registros
+INSERT INTO partida_arancelaria (id_partida, codigo, descripcion, porcentaje_arancel) VALUES
+(1, '847130', 'Computadoras portátiles', 5),
+(2, '851713', 'Teléfonos inteligentes', 5),
+(3, '852852', 'Monitores', 10),
+(4, '841810', 'Refrigeradores', 15),
+(5, '845011', 'Lavadoras', 15),
+(6, '610910', 'Camisetas de algodón', 14),
+(7, '640399', 'Calzado', 14),
+(8, '940360', 'Muebles de madera', 15),
+(9, '901890', 'Instrumentos médicos', 1),
+(10, '950300', 'Juguetes', 10),
+(11, '090111', 'Café sin tostar', 5),
+(12, '100630', 'Arroz semiblanqueado', 10),
+(13, '850440', 'Convertidores estáticos', 5),
+(14, '401110', 'Neumáticos para automóviles', 10),
+(15, '842121', 'Filtros de agua', 5);
+
+-- producto: 20 registros
+INSERT INTO producto (id_producto, sku, descripcion, unidad_medida, valor_referencia, peso_unitario_kg, id_partida) VALUES
+(1, 'ADU-0001', 'Computadora portátil 14 pulgadas', 'unidad', 650, 1.8, 1),
+(2, 'ADU-0002', 'Teléfono inteligente 128 GB', 'unidad', 240, 0.25, 2),
+(3, 'ADU-0003', 'Monitor LED 24 pulgadas', 'unidad', 160, 3.2, 3),
+(4, 'ADU-0004', 'Refrigerador 300 litros', 'unidad', 450, 58, 4),
+(5, 'ADU-0005', 'Lavadora automática 12 kg', 'unidad', 380, 62, 5),
+(6, 'ADU-0006', 'Camiseta de algodón talla M', 'unidad', 8, 0.18, 6),
+(7, 'ADU-0007', 'Zapatos de cuero talla 40', 'unidad', 35, 0.9, 7),
+(8, 'ADU-0008', 'Mesa de madera para comedor', 'unidad', 180, 25, 8),
+(9, 'ADU-0009', 'Tensiómetro digital', 'unidad', 30, 0.4, 9),
+(10, 'ADU-0010', 'Juego de bloques educativos', 'unidad', 12, 0.7, 10),
+(11, 'ADU-0011', 'Café verde en saco 25 kg', 'unidad', 95, 25, 11),
+(12, 'ADU-0012', 'Arroz en saco 20 kg', 'unidad', 22, 20, 12),
+(13, 'ADU-0013', 'Cargador USB-C 65 W', 'unidad', 15, 0.15, 13),
+(14, 'ADU-0014', 'Neumático radial 205/55 R16', 'unidad', 55, 9.5, 14),
+(15, 'ADU-0015', 'Filtro doméstico de agua', 'unidad', 45, 2.5, 15),
+(16, 'ADU-0016', 'Computadora portátil 16 pulgadas', 'unidad', 850, 2.2, 1),
+(17, 'ADU-0017', 'Teléfono inteligente 256 GB', 'unidad', 320, 0.28, 2),
+(18, 'ADU-0018', 'Monitor LED 27 pulgadas', 'unidad', 210, 4.5, 3),
+(19, 'ADU-0019', 'Camiseta de algodón talla L', 'unidad', 9, 0.2, 6),
+(20, 'ADU-0020', 'Mesa auxiliar de madera', 'unidad', 75, 8, 8);
+
+-- funcionario: 15 registros
+INSERT INTO funcionario (id_funcionario, nombre, cargo, id_supervisor, correo, password_hash, rol, activo, session_version) VALUES
+(1, 'Laura Campos', 'Supervisora', NULL, 'admin@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'admin', 1, 0),
+(2, 'Diego Solís', 'Inspector', 1, 'operador@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'operador', 1, 0),
+(3, 'Ana Mora', 'Inspector', 1, 'funcionario3@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'operador', 1, 0),
+(4, 'José Vargas', 'Inspector', 1, 'funcionario4@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'operador', 1, 0),
+(5, 'Sofía Rojas', 'Inspector', 1, 'funcionario5@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'operador', 1, 0),
+(6, 'Andrés León', 'Inspector', 1, 'funcionario6@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'operador', 1, 0),
+(7, 'María Quesada', 'Analista', 2, 'consulta@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0),
+(8, 'Carlos Chaves', 'Analista', 2, 'funcionario8@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0),
+(9, 'Valeria Soto', 'Analista', 2, 'funcionario9@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0),
+(10, 'Daniel Núñez', 'Analista', 2, 'funcionario10@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0),
+(11, 'Lucía Arias', 'Analista', 2, 'funcionario11@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0),
+(12, 'Pablo Jiménez', 'Analista', 2, 'funcionario12@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0),
+(13, 'Elena Salas', 'Analista', 2, 'funcionario13@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0),
+(14, 'Gabriel Cordero', 'Analista', 2, 'funcionario14@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0),
+(15, 'Natalia Castro', 'Analista', 2, 'funcionario15@aduana.local', '$2b$10$SFc3TYxfAfr2hCv7mKXGD.xTYV.BQjAuuK50odNmaw/LuxYorp/Ry', 'consulta', 1, 0);
+
+-- declaracion: 30 registros
+INSERT INTO declaracion (id_declaracion, numero, fecha, regimen, estado, moneda, id_importador, id_agente, id_pais_origen) VALUES
+(1, 'DUA-2026-0001', '2026-09-09', 'Importacion', 'Retenida', 'USD', 1, 4, 1),
+(2, 'DUA-2026-0002', '2026-09-10', 'Importacion', 'En inspeccion', 'USD', 2, 5, 2),
+(3, 'DUA-2026-0003', '2026-09-11', 'Deposito', 'Liberada', 'USD', 3, 6, 3),
+(4, 'DUA-2026-0004', '2026-09-12', 'Transito', 'Retenida', 'USD', 4, 7, 4),
+(5, 'DUA-2026-0005', '2026-10-01', 'Exportacion', 'En inspeccion', 'USD', 5, 8, 5),
+(6, 'DUA-2026-0006', '2026-10-02', 'Importacion', 'Liberada', 'USD', 6, 9, 6),
+(7, 'DUA-2026-0007', '2026-10-03', 'Importacion', 'Retenida', 'USD', 7, 10, 7),
+(8, 'DUA-2026-0008', '2026-10-04', 'Deposito', 'En inspeccion', 'USD', 8, 11, 8),
+(9, 'DUA-2026-0009', '2026-10-05', 'Transito', 'Liberada', 'USD', 9, 12, 9),
+(10, 'DUA-2026-0010', '2026-10-06', 'Exportacion', 'Retenida', 'USD', 10, 13, 10),
+(11, 'DUA-2026-0011', '2026-10-07', 'Importacion', 'En inspeccion', 'USD', 11, 14, 11),
+(12, 'DUA-2026-0012', '2026-10-08', 'Importacion', 'Liberada', 'USD', 12, 15, 12),
+(13, 'DUA-2026-0013', '2026-10-09', 'Deposito', 'Retenida', 'USD', 13, 1, 13),
+(14, 'DUA-2026-0014', '2026-10-10', 'Transito', 'En inspeccion', 'USD', 14, 2, 14),
+(15, 'DUA-2026-0015', '2026-10-11', 'Exportacion', 'Liberada', 'USD', 15, 3, 15),
+(16, 'DUA-2026-0016', '2026-10-12', 'Importacion', 'Retenida', 'USD', 1, 4, 1),
+(17, 'DUA-2026-0017', '2026-10-13', 'Importacion', 'En inspeccion', 'USD', 2, 5, 2),
+(18, 'DUA-2026-0018', '2026-10-14', 'Deposito', 'Liberada', 'USD', 3, 6, 3),
+(19, 'DUA-2026-0019', '2026-10-15', 'Transito', 'Retenida', 'USD', 4, 7, 4),
+(20, 'DUA-2026-0020', '2026-10-16', 'Exportacion', 'En inspeccion', 'USD', 5, 8, 5),
+(21, 'DUA-2026-0021', '2026-10-17', 'Importacion', 'Liberada', 'USD', 6, 9, 6),
+(22, 'DUA-2026-0022', '2026-10-18', 'Importacion', 'Retenida', 'USD', 7, 10, 7),
+(23, 'DUA-2026-0023', '2026-10-19', 'Deposito', 'En inspeccion', 'USD', 8, 11, 8),
+(24, 'DUA-2026-0024', '2026-10-20', 'Transito', 'Liberada', 'USD', 9, 12, 9),
+(25, 'DUA-2026-0025', '2026-10-01', 'Exportacion', 'Retenida', 'USD', 10, 13, 10),
+(26, 'DUA-2026-0026', '2026-10-02', 'Importacion', 'En inspeccion', 'USD', 11, 14, 11),
+(27, 'DUA-2026-0027', '2026-10-03', 'Importacion', 'Liberada', 'USD', 12, 15, 12),
+(28, 'DUA-2026-0028', '2026-10-04', 'Deposito', 'Retenida', 'USD', 13, 1, 13),
+(29, 'DUA-2026-0029', '2026-10-05', 'Transito', 'En inspeccion', 'USD', 14, 2, 14),
+(30, 'DUA-2026-0030', '2026-10-06', 'Exportacion', 'Liberada', 'USD', 15, 3, 15);
+
+-- detalle_declaracion: 60 registros
+INSERT INTO detalle_declaracion (id_declaracion, id_producto, cantidad, valor_declarado) VALUES
+(1, 1, 107, 69550),
+(1, 8, 132, 23760),
+(2, 2, 114, 27360),
+(2, 9, 139, 4170),
+(3, 3, 121, 19360),
+(3, 10, 146, 1752),
+(4, 4, 128, 57600),
+(4, 11, 153, 14535),
+(5, 5, 135, 51300),
+(5, 12, 160, 3520),
+(6, 6, 142, 1136),
+(6, 13, 167, 2505),
+(7, 7, 149, 5215),
+(7, 14, 174, 9570),
+(8, 8, 156, 28080),
+(8, 15, 181, 8145),
+(9, 9, 163, 4890),
+(9, 16, 188, 159800),
+(10, 10, 170, 2040),
+(10, 17, 195, 62400),
+(11, 11, 177, 16815),
+(11, 18, 202, 42420),
+(12, 12, 184, 4048),
+(12, 19, 209, 1881),
+(13, 13, 191, 2865),
+(13, 20, 216, 16200),
+(14, 14, 198, 10890),
+(14, 1, 223, 144950),
+(15, 15, 205, 9225),
+(15, 2, 230, 55200),
+(16, 16, 212, 180200),
+(16, 3, 237, 37920),
+(17, 17, 219, 70080),
+(17, 4, 244, 109800),
+(18, 18, 226, 47460),
+(18, 5, 251, 95380),
+(19, 19, 233, 2097),
+(19, 6, 258, 2064),
+(20, 20, 240, 18000),
+(20, 7, 265, 9275),
+(21, 1, 247, 160550),
+(21, 8, 272, 48960),
+(22, 2, 254, 60960),
+(22, 9, 279, 8370),
+(23, 3, 261, 41760),
+(23, 10, 286, 3432),
+(24, 4, 268, 120600),
+(24, 11, 293, 27835),
+(25, 5, 275, 104500),
+(25, 12, 300, 6600),
+(26, 6, 282, 2256),
+(26, 13, 307, 4605),
+(27, 7, 289, 10115),
+(27, 14, 314, 17270),
+(28, 8, 296, 53280),
+(28, 15, 321, 14445),
+(29, 9, 303, 9090),
+(29, 16, 328, 278800),
+(30, 10, 310, 3720),
+(30, 17, 335, 107200);
+
+-- contenedor: 40 registros
+INSERT INTO contenedor (id_contenedor, numero, tipo, peso_bruto_kg, id_declaracion) VALUES
+(1, 'ADUU0000001', 'Seco 40 pies', 6090, 1),
+(31, 'ADUU0000031', 'Refrigerado 40 pies', 8070, 1),
+(2, 'ADUU0000002', 'Seco 20 pies', 6180, 2),
+(32, 'ADUU0000032', 'Refrigerado 40 pies', 8140, 2),
+(3, 'ADUU0000003', 'Seco 40 pies', 6270, 3),
+(33, 'ADUU0000033', 'Refrigerado 40 pies', 8210, 3),
+(4, 'ADUU0000004', 'Seco 20 pies', 6360, 4),
+(34, 'ADUU0000034', 'Refrigerado 40 pies', 8280, 4),
+(5, 'ADUU0000005', 'Seco 40 pies', 6450, 5),
+(35, 'ADUU0000035', 'Refrigerado 40 pies', 8350, 5),
+(6, 'ADUU0000006', 'Seco 20 pies', 6540, 6),
+(36, 'ADUU0000036', 'Refrigerado 40 pies', 8420, 6),
+(7, 'ADUU0000007', 'Seco 40 pies', 6630, 7),
+(37, 'ADUU0000037', 'Refrigerado 40 pies', 8490, 7),
+(8, 'ADUU0000008', 'Seco 20 pies', 6720, 8),
+(38, 'ADUU0000038', 'Refrigerado 40 pies', 8560, 8),
+(9, 'ADUU0000009', 'Seco 40 pies', 6810, 9),
+(39, 'ADUU0000039', 'Refrigerado 40 pies', 8630, 9),
+(10, 'ADUU0000010', 'Seco 20 pies', 6900, 10),
+(40, 'ADUU0000040', 'Refrigerado 40 pies', 8700, 10),
+(11, 'ADUU0000011', 'Seco 40 pies', 6990, 11),
+(12, 'ADUU0000012', 'Seco 20 pies', 7080, 12),
+(13, 'ADUU0000013', 'Seco 40 pies', 7170, 13),
+(14, 'ADUU0000014', 'Seco 20 pies', 7260, 14),
+(15, 'ADUU0000015', 'Seco 40 pies', 7350, 15),
+(16, 'ADUU0000016', 'Seco 20 pies', 7440, 16),
+(17, 'ADUU0000017', 'Seco 40 pies', 7530, 17),
+(18, 'ADUU0000018', 'Seco 20 pies', 7620, 18),
+(19, 'ADUU0000019', 'Seco 40 pies', 7710, 19),
+(20, 'ADUU0000020', 'Seco 20 pies', 7800, 20),
+(21, 'ADUU0000021', 'Seco 40 pies', 7890, 21),
+(22, 'ADUU0000022', 'Seco 20 pies', 7980, 22),
+(23, 'ADUU0000023', 'Seco 40 pies', 8070, 23),
+(24, 'ADUU0000024', 'Seco 20 pies', 8160, 24),
+(25, 'ADUU0000025', 'Seco 40 pies', 8250, 25),
+(26, 'ADUU0000026', 'Seco 20 pies', 8340, 26),
+(27, 'ADUU0000027', 'Seco 40 pies', 8430, 27),
+(28, 'ADUU0000028', 'Seco 20 pies', 8520, 28),
+(29, 'ADUU0000029', 'Seco 40 pies', 8610, 29),
+(30, 'ADUU0000030', 'Seco 20 pies', 8700, 30);
+
+-- bodega: 15 registros
+INSERT INTO bodega (id_bodega, nombre, ubicacion, capacidad_peso_kg) VALUES
+(1, 'Bodega 01', 'Limón, terminal Moín', 52500),
+(2, 'Bodega 02', 'Limón, zona logística', 55000),
+(3, 'Bodega 03', 'Caldera, Puntarenas', 57500),
+(4, 'Bodega 04', 'Alajuela, aeropuerto', 60000),
+(5, 'Bodega 05', 'Peñas Blancas, Guanacaste', 62500),
+(6, 'Bodega 06', 'Paso Canoas, Puntarenas', 65000),
+(7, 'Bodega 07', 'San José, parque industrial', 67500),
+(8, 'Bodega 08', 'Heredia, zona franca', 70000),
+(9, 'Bodega 09', 'Cartago, centro logístico', 72500),
+(10, 'Bodega 10', 'Guápiles, Pococí', 75000),
+(11, 'Bodega 11', 'Liberia, Guanacaste', 77500),
+(12, 'Bodega 12', 'Pérez Zeledón, San José', 80000),
+(13, 'Bodega 13', 'Santa Ana, San José', 82500),
+(14, 'Bodega 14', 'San Carlos, Alajuela', 85000),
+(15, 'Bodega 15', 'El Coyol, Alajuela', 87500);
+
+-- inventario: 90 registros
+INSERT INTO inventario (id_inventario, id_declaracion, id_producto, id_bodega, cantidad, fecha_ingreso, estado) VALUES
+(1, 1, 1, 1, 107, '2026-09-09', 'Retenido'),
+(2, 1, 8, 2, 132, '2026-09-09', 'Retenido'),
+(3, 2, 2, 2, 94, '2026-09-10', 'Retenido'),
+(4, 2, 2, 3, 20, '2026-09-10', 'Retenido'),
+(5, 2, 9, 3, 119, '2026-09-10', 'Retenido'),
+(6, 2, 9, 4, 20, '2026-09-10', 'Retenido'),
+(7, 3, 3, 3, 111, '2026-09-11', 'Liberado'),
+(8, 3, 10, 4, 136, '2026-09-11', 'Liberado'),
+(9, 4, 4, 4, 78, '2026-09-12', 'Retenido'),
+(10, 4, 4, 5, 20, '2026-09-12', 'Retenido'),
+(11, 4, 11, 5, 103, '2026-09-12', 'Retenido'),
+(12, 4, 11, 6, 20, '2026-09-12', 'Retenido'),
+(13, 5, 5, 5, 135, '2026-10-01', 'Retenido'),
+(14, 5, 12, 6, 160, '2026-10-01', 'Retenido'),
+(15, 6, 6, 6, 112, '2026-10-02', 'Liberado'),
+(16, 6, 6, 7, 20, '2026-10-02', 'Liberado'),
+(17, 6, 13, 7, 137, '2026-10-02', 'Liberado'),
+(18, 6, 13, 8, 20, '2026-10-02', 'Liberado'),
+(19, 7, 7, 7, 149, '2026-10-03', 'Retenido'),
+(20, 7, 14, 8, 174, '2026-10-03', 'Retenido'),
+(21, 8, 8, 8, 106, '2026-10-04', 'Retenido'),
+(22, 8, 8, 9, 20, '2026-10-04', 'Retenido'),
+(23, 8, 15, 9, 131, '2026-10-04', 'Retenido'),
+(24, 8, 15, 10, 20, '2026-10-04', 'Retenido'),
+(25, 9, 9, 9, 153, '2026-10-05', 'Liberado'),
+(26, 9, 16, 10, 178, '2026-10-05', 'Liberado'),
+(27, 10, 10, 10, 150, '2026-10-06', 'Retenido'),
+(28, 10, 10, 11, 20, '2026-10-06', 'Retenido'),
+(29, 10, 17, 11, 175, '2026-10-06', 'Retenido'),
+(30, 10, 17, 12, 20, '2026-10-06', 'Retenido'),
+(31, 11, 11, 11, 177, '2026-10-07', 'Retenido'),
+(32, 11, 18, 12, 202, '2026-10-07', 'Retenido'),
+(33, 12, 12, 12, 124, '2026-10-08', 'Liberado'),
+(34, 12, 12, 13, 20, '2026-10-08', 'Liberado'),
+(35, 12, 19, 13, 149, '2026-10-08', 'Liberado'),
+(36, 12, 19, 14, 20, '2026-10-08', 'Liberado'),
+(37, 13, 13, 13, 191, '2026-10-09', 'Retenido'),
+(38, 13, 20, 14, 216, '2026-10-09', 'Retenido'),
+(39, 14, 14, 14, 178, '2026-10-10', 'Retenido'),
+(40, 14, 14, 15, 20, '2026-10-10', 'Retenido'),
+(41, 14, 1, 15, 203, '2026-10-10', 'Retenido'),
+(42, 14, 1, 1, 20, '2026-10-10', 'Retenido'),
+(43, 15, 15, 15, 195, '2026-10-11', 'Liberado'),
+(44, 15, 2, 1, 220, '2026-10-11', 'Liberado'),
+(45, 16, 16, 1, 162, '2026-10-12', 'Retenido'),
+(46, 16, 16, 2, 20, '2026-10-12', 'Retenido'),
+(47, 16, 3, 2, 187, '2026-10-12', 'Retenido'),
+(48, 16, 3, 3, 20, '2026-10-12', 'Retenido'),
+(49, 17, 17, 2, 219, '2026-10-13', 'Retenido'),
+(50, 17, 4, 3, 244, '2026-10-13', 'Retenido'),
+(51, 18, 18, 3, 196, '2026-10-14', 'Liberado'),
+(52, 18, 18, 4, 20, '2026-10-14', 'Liberado'),
+(53, 18, 5, 4, 221, '2026-10-14', 'Liberado'),
+(54, 18, 5, 5, 20, '2026-10-14', 'Liberado'),
+(55, 19, 19, 4, 233, '2026-10-15', 'Retenido'),
+(56, 19, 6, 5, 258, '2026-10-15', 'Retenido'),
+(57, 20, 20, 5, 190, '2026-10-16', 'Retenido'),
+(58, 20, 20, 6, 20, '2026-10-16', 'Retenido'),
+(59, 20, 7, 6, 215, '2026-10-16', 'Retenido'),
+(60, 20, 7, 7, 20, '2026-10-16', 'Retenido'),
+(61, 21, 1, 6, 237, '2026-10-17', 'Liberado'),
+(62, 21, 8, 7, 262, '2026-10-17', 'Liberado'),
+(63, 22, 2, 7, 234, '2026-10-18', 'Retenido'),
+(64, 22, 2, 8, 20, '2026-10-18', 'Retenido'),
+(65, 22, 9, 8, 259, '2026-10-18', 'Retenido'),
+(66, 22, 9, 9, 20, '2026-10-18', 'Retenido'),
+(67, 23, 3, 8, 261, '2026-10-19', 'Retenido'),
+(68, 23, 10, 9, 286, '2026-10-19', 'Retenido'),
+(69, 24, 4, 9, 208, '2026-10-20', 'Liberado'),
+(70, 24, 4, 10, 20, '2026-10-20', 'Liberado'),
+(71, 24, 11, 10, 233, '2026-10-20', 'Liberado'),
+(72, 24, 11, 11, 20, '2026-10-20', 'Liberado'),
+(73, 25, 5, 10, 275, '2026-10-01', 'Retenido'),
+(74, 25, 12, 11, 300, '2026-10-01', 'Retenido'),
+(75, 26, 6, 11, 262, '2026-10-02', 'Retenido'),
+(76, 26, 6, 12, 20, '2026-10-02', 'Retenido'),
+(77, 26, 13, 12, 287, '2026-10-02', 'Retenido'),
+(78, 26, 13, 13, 20, '2026-10-02', 'Retenido'),
+(79, 27, 7, 12, 279, '2026-10-03', 'Liberado'),
+(80, 27, 14, 13, 304, '2026-10-03', 'Liberado'),
+(81, 28, 8, 13, 246, '2026-10-04', 'Retenido'),
+(82, 28, 8, 14, 20, '2026-10-04', 'Retenido'),
+(83, 28, 15, 14, 271, '2026-10-04', 'Retenido'),
+(84, 28, 15, 15, 20, '2026-10-04', 'Retenido'),
+(85, 29, 9, 14, 303, '2026-10-05', 'Retenido'),
+(86, 29, 16, 15, 328, '2026-10-05', 'Retenido'),
+(87, 30, 10, 15, 280, '2026-10-06', 'Liberado'),
+(88, 30, 10, 1, 20, '2026-10-06', 'Liberado'),
+(89, 30, 17, 1, 305, '2026-10-06', 'Liberado'),
+(90, 30, 17, 2, 20, '2026-10-06', 'Liberado');
+
+-- movimiento: 110 registros
+INSERT INTO movimiento (id_movimiento, referencia, tipo, fecha, cantidad, id_declaracion, id_producto, id_bodega_origen, id_bodega_destino, estado_mercancia, id_funcionario, observaciones) VALUES
+(1, 'SEED-ENT-1-1', 'Entrada', '2026-09-09 09:00:00', 107, 1, 1, NULL, 1, 'Retenido', 1, 'Ingreso inicial de partida'),
+(2, 'SEED-ENT-1-8', 'Entrada', '2026-09-09 09:00:00', 132, 1, 8, NULL, 2, 'Retenido', 1, 'Ingreso inicial de partida'),
+(3, 'SEED-ENT-2-2', 'Entrada', '2026-09-10 09:00:00', 114, 2, 2, NULL, 2, 'Retenido', 2, 'Ingreso inicial de partida'),
+(4, 'SEED-TRA-2-2', 'Traslado', '2026-09-10 11:00:00', 20, 2, 2, 2, 3, 'Retenido', 2, 'Reubicación interna'),
+(5, 'SEED-ENT-2-9', 'Entrada', '2026-09-10 09:00:00', 139, 2, 9, NULL, 3, 'Retenido', 2, 'Ingreso inicial de partida'),
+(6, 'SEED-TRA-2-9', 'Traslado', '2026-09-10 11:00:00', 20, 2, 9, 3, 4, 'Retenido', 2, 'Reubicación interna'),
+(7, 'SEED-ENT-3-3', 'Entrada', '2026-09-11 09:00:00', 121, 3, 3, NULL, 3, 'Liberado', 3, 'Ingreso inicial de partida'),
+(8, 'SEED-SAL-3-3', 'Salida', '2026-09-11 14:00:00', 10, 3, 3, 3, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(9, 'SEED-ENT-3-10', 'Entrada', '2026-09-11 09:00:00', 146, 3, 10, NULL, 4, 'Liberado', 3, 'Ingreso inicial de partida'),
+(10, 'SEED-SAL-3-10', 'Salida', '2026-09-11 14:00:00', 10, 3, 10, 4, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(11, 'SEED-ENT-4-4', 'Entrada', '2026-09-12 09:00:00', 98, 4, 4, NULL, 4, 'Retenido', 4, 'Ingreso inicial de partida'),
+(12, 'SEED-TRA-4-4', 'Traslado', '2026-09-12 11:00:00', 20, 4, 4, 4, 5, 'Retenido', 2, 'Reubicación interna'),
+(13, 'SEED-ENT-4-11', 'Entrada', '2026-09-12 09:00:00', 123, 4, 11, NULL, 5, 'Retenido', 4, 'Ingreso inicial de partida'),
+(14, 'SEED-TRA-4-11', 'Traslado', '2026-09-12 11:00:00', 20, 4, 11, 5, 6, 'Retenido', 2, 'Reubicación interna'),
+(15, 'SEED-ENT-5-5', 'Entrada', '2026-10-01 09:00:00', 135, 5, 5, NULL, 5, 'Retenido', 5, 'Ingreso inicial de partida'),
+(16, 'SEED-ENT-5-12', 'Entrada', '2026-10-01 09:00:00', 160, 5, 12, NULL, 6, 'Retenido', 5, 'Ingreso inicial de partida'),
+(17, 'SEED-ENT-6-6', 'Entrada', '2026-10-02 09:00:00', 142, 6, 6, NULL, 6, 'Liberado', 6, 'Ingreso inicial de partida'),
+(18, 'SEED-TRA-6-6', 'Traslado', '2026-10-02 11:00:00', 20, 6, 6, 6, 7, 'Liberado', 2, 'Reubicación interna'),
+(19, 'SEED-SAL-6-6', 'Salida', '2026-10-02 14:00:00', 10, 6, 6, 6, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(20, 'SEED-ENT-6-13', 'Entrada', '2026-10-02 09:00:00', 167, 6, 13, NULL, 7, 'Liberado', 6, 'Ingreso inicial de partida'),
+(21, 'SEED-TRA-6-13', 'Traslado', '2026-10-02 11:00:00', 20, 6, 13, 7, 8, 'Liberado', 2, 'Reubicación interna'),
+(22, 'SEED-SAL-6-13', 'Salida', '2026-10-02 14:00:00', 10, 6, 13, 7, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(23, 'SEED-ENT-7-7', 'Entrada', '2026-10-03 09:00:00', 149, 7, 7, NULL, 7, 'Retenido', 1, 'Ingreso inicial de partida'),
+(24, 'SEED-ENT-7-14', 'Entrada', '2026-10-03 09:00:00', 174, 7, 14, NULL, 8, 'Retenido', 1, 'Ingreso inicial de partida'),
+(25, 'SEED-ENT-8-8', 'Entrada', '2026-10-04 09:00:00', 126, 8, 8, NULL, 8, 'Retenido', 2, 'Ingreso inicial de partida'),
+(26, 'SEED-TRA-8-8', 'Traslado', '2026-10-04 11:00:00', 20, 8, 8, 8, 9, 'Retenido', 2, 'Reubicación interna'),
+(27, 'SEED-ENT-8-15', 'Entrada', '2026-10-04 09:00:00', 151, 8, 15, NULL, 9, 'Retenido', 2, 'Ingreso inicial de partida'),
+(28, 'SEED-TRA-8-15', 'Traslado', '2026-10-04 11:00:00', 20, 8, 15, 9, 10, 'Retenido', 2, 'Reubicación interna'),
+(29, 'SEED-ENT-9-9', 'Entrada', '2026-10-05 09:00:00', 163, 9, 9, NULL, 9, 'Liberado', 3, 'Ingreso inicial de partida'),
+(30, 'SEED-SAL-9-9', 'Salida', '2026-10-05 14:00:00', 10, 9, 9, 9, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(31, 'SEED-ENT-9-16', 'Entrada', '2026-10-05 09:00:00', 188, 9, 16, NULL, 10, 'Liberado', 3, 'Ingreso inicial de partida'),
+(32, 'SEED-SAL-9-16', 'Salida', '2026-10-05 14:00:00', 10, 9, 16, 10, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(33, 'SEED-ENT-10-10', 'Entrada', '2026-10-06 09:00:00', 170, 10, 10, NULL, 10, 'Retenido', 4, 'Ingreso inicial de partida'),
+(34, 'SEED-TRA-10-10', 'Traslado', '2026-10-06 11:00:00', 20, 10, 10, 10, 11, 'Retenido', 2, 'Reubicación interna'),
+(35, 'SEED-ENT-10-17', 'Entrada', '2026-10-06 09:00:00', 195, 10, 17, NULL, 11, 'Retenido', 4, 'Ingreso inicial de partida'),
+(36, 'SEED-TRA-10-17', 'Traslado', '2026-10-06 11:00:00', 20, 10, 17, 11, 12, 'Retenido', 2, 'Reubicación interna'),
+(37, 'SEED-ENT-11-11', 'Entrada', '2026-10-07 09:00:00', 177, 11, 11, NULL, 11, 'Retenido', 5, 'Ingreso inicial de partida'),
+(38, 'SEED-ENT-11-18', 'Entrada', '2026-10-07 09:00:00', 202, 11, 18, NULL, 12, 'Retenido', 5, 'Ingreso inicial de partida'),
+(39, 'SEED-ENT-12-12', 'Entrada', '2026-10-08 09:00:00', 154, 12, 12, NULL, 12, 'Liberado', 6, 'Ingreso inicial de partida'),
+(40, 'SEED-TRA-12-12', 'Traslado', '2026-10-08 11:00:00', 20, 12, 12, 12, 13, 'Liberado', 2, 'Reubicación interna'),
+(41, 'SEED-SAL-12-12', 'Salida', '2026-10-08 14:00:00', 10, 12, 12, 12, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(42, 'SEED-ENT-12-19', 'Entrada', '2026-10-08 09:00:00', 179, 12, 19, NULL, 13, 'Liberado', 6, 'Ingreso inicial de partida'),
+(43, 'SEED-TRA-12-19', 'Traslado', '2026-10-08 11:00:00', 20, 12, 19, 13, 14, 'Liberado', 2, 'Reubicación interna'),
+(44, 'SEED-SAL-12-19', 'Salida', '2026-10-08 14:00:00', 10, 12, 19, 13, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(45, 'SEED-ENT-13-13', 'Entrada', '2026-10-09 09:00:00', 191, 13, 13, NULL, 13, 'Retenido', 1, 'Ingreso inicial de partida'),
+(46, 'SEED-ENT-13-20', 'Entrada', '2026-10-09 09:00:00', 216, 13, 20, NULL, 14, 'Retenido', 1, 'Ingreso inicial de partida'),
+(47, 'SEED-ENT-14-14', 'Entrada', '2026-10-10 09:00:00', 198, 14, 14, NULL, 14, 'Retenido', 2, 'Ingreso inicial de partida'),
+(48, 'SEED-TRA-14-14', 'Traslado', '2026-10-10 11:00:00', 20, 14, 14, 14, 15, 'Retenido', 2, 'Reubicación interna'),
+(49, 'SEED-ENT-14-1', 'Entrada', '2026-10-10 09:00:00', 223, 14, 1, NULL, 15, 'Retenido', 2, 'Ingreso inicial de partida'),
+(50, 'SEED-TRA-14-1', 'Traslado', '2026-10-10 11:00:00', 20, 14, 1, 15, 1, 'Retenido', 2, 'Reubicación interna'),
+(51, 'SEED-ENT-15-15', 'Entrada', '2026-10-11 09:00:00', 205, 15, 15, NULL, 15, 'Liberado', 3, 'Ingreso inicial de partida'),
+(52, 'SEED-SAL-15-15', 'Salida', '2026-10-11 14:00:00', 10, 15, 15, 15, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(53, 'SEED-ENT-15-2', 'Entrada', '2026-10-11 09:00:00', 230, 15, 2, NULL, 1, 'Liberado', 3, 'Ingreso inicial de partida'),
+(54, 'SEED-SAL-15-2', 'Salida', '2026-10-11 14:00:00', 10, 15, 2, 1, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(55, 'SEED-ENT-16-16', 'Entrada', '2026-10-12 09:00:00', 182, 16, 16, NULL, 1, 'Retenido', 4, 'Ingreso inicial de partida'),
+(56, 'SEED-TRA-16-16', 'Traslado', '2026-10-12 11:00:00', 20, 16, 16, 1, 2, 'Retenido', 2, 'Reubicación interna'),
+(57, 'SEED-ENT-16-3', 'Entrada', '2026-10-12 09:00:00', 207, 16, 3, NULL, 2, 'Retenido', 4, 'Ingreso inicial de partida'),
+(58, 'SEED-TRA-16-3', 'Traslado', '2026-10-12 11:00:00', 20, 16, 3, 2, 3, 'Retenido', 2, 'Reubicación interna'),
+(59, 'SEED-ENT-17-17', 'Entrada', '2026-10-13 09:00:00', 219, 17, 17, NULL, 2, 'Retenido', 5, 'Ingreso inicial de partida'),
+(60, 'SEED-ENT-17-4', 'Entrada', '2026-10-13 09:00:00', 244, 17, 4, NULL, 3, 'Retenido', 5, 'Ingreso inicial de partida'),
+(61, 'SEED-ENT-18-18', 'Entrada', '2026-10-14 09:00:00', 226, 18, 18, NULL, 3, 'Liberado', 6, 'Ingreso inicial de partida'),
+(62, 'SEED-TRA-18-18', 'Traslado', '2026-10-14 11:00:00', 20, 18, 18, 3, 4, 'Liberado', 2, 'Reubicación interna'),
+(63, 'SEED-SAL-18-18', 'Salida', '2026-10-14 14:00:00', 10, 18, 18, 3, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(64, 'SEED-ENT-18-5', 'Entrada', '2026-10-14 09:00:00', 251, 18, 5, NULL, 4, 'Liberado', 6, 'Ingreso inicial de partida'),
+(65, 'SEED-TRA-18-5', 'Traslado', '2026-10-14 11:00:00', 20, 18, 5, 4, 5, 'Liberado', 2, 'Reubicación interna'),
+(66, 'SEED-SAL-18-5', 'Salida', '2026-10-14 14:00:00', 10, 18, 5, 4, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(67, 'SEED-ENT-19-19', 'Entrada', '2026-10-15 09:00:00', 233, 19, 19, NULL, 4, 'Retenido', 1, 'Ingreso inicial de partida'),
+(68, 'SEED-ENT-19-6', 'Entrada', '2026-10-15 09:00:00', 258, 19, 6, NULL, 5, 'Retenido', 1, 'Ingreso inicial de partida'),
+(69, 'SEED-ENT-20-20', 'Entrada', '2026-10-16 09:00:00', 210, 20, 20, NULL, 5, 'Retenido', 2, 'Ingreso inicial de partida'),
+(70, 'SEED-TRA-20-20', 'Traslado', '2026-10-16 11:00:00', 20, 20, 20, 5, 6, 'Retenido', 2, 'Reubicación interna'),
+(71, 'SEED-ENT-20-7', 'Entrada', '2026-10-16 09:00:00', 235, 20, 7, NULL, 6, 'Retenido', 2, 'Ingreso inicial de partida'),
+(72, 'SEED-TRA-20-7', 'Traslado', '2026-10-16 11:00:00', 20, 20, 7, 6, 7, 'Retenido', 2, 'Reubicación interna'),
+(73, 'SEED-ENT-21-1', 'Entrada', '2026-10-17 09:00:00', 247, 21, 1, NULL, 6, 'Liberado', 3, 'Ingreso inicial de partida'),
+(74, 'SEED-SAL-21-1', 'Salida', '2026-10-17 14:00:00', 10, 21, 1, 6, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(75, 'SEED-ENT-21-8', 'Entrada', '2026-10-17 09:00:00', 272, 21, 8, NULL, 7, 'Liberado', 3, 'Ingreso inicial de partida'),
+(76, 'SEED-SAL-21-8', 'Salida', '2026-10-17 14:00:00', 10, 21, 8, 7, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(77, 'SEED-ENT-22-2', 'Entrada', '2026-10-18 09:00:00', 254, 22, 2, NULL, 7, 'Retenido', 4, 'Ingreso inicial de partida'),
+(78, 'SEED-TRA-22-2', 'Traslado', '2026-10-18 11:00:00', 20, 22, 2, 7, 8, 'Retenido', 2, 'Reubicación interna'),
+(79, 'SEED-ENT-22-9', 'Entrada', '2026-10-18 09:00:00', 279, 22, 9, NULL, 8, 'Retenido', 4, 'Ingreso inicial de partida'),
+(80, 'SEED-TRA-22-9', 'Traslado', '2026-10-18 11:00:00', 20, 22, 9, 8, 9, 'Retenido', 2, 'Reubicación interna'),
+(81, 'SEED-ENT-23-3', 'Entrada', '2026-10-19 09:00:00', 261, 23, 3, NULL, 8, 'Retenido', 5, 'Ingreso inicial de partida'),
+(82, 'SEED-ENT-23-10', 'Entrada', '2026-10-19 09:00:00', 286, 23, 10, NULL, 9, 'Retenido', 5, 'Ingreso inicial de partida'),
+(83, 'SEED-ENT-24-4', 'Entrada', '2026-10-20 09:00:00', 238, 24, 4, NULL, 9, 'Liberado', 6, 'Ingreso inicial de partida'),
+(84, 'SEED-TRA-24-4', 'Traslado', '2026-10-20 11:00:00', 20, 24, 4, 9, 10, 'Liberado', 2, 'Reubicación interna'),
+(85, 'SEED-SAL-24-4', 'Salida', '2026-10-20 14:00:00', 10, 24, 4, 9, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(86, 'SEED-ENT-24-11', 'Entrada', '2026-10-20 09:00:00', 263, 24, 11, NULL, 10, 'Liberado', 6, 'Ingreso inicial de partida'),
+(87, 'SEED-TRA-24-11', 'Traslado', '2026-10-20 11:00:00', 20, 24, 11, 10, 11, 'Liberado', 2, 'Reubicación interna'),
+(88, 'SEED-SAL-24-11', 'Salida', '2026-10-20 14:00:00', 10, 24, 11, 10, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(89, 'SEED-ENT-25-5', 'Entrada', '2026-10-01 09:00:00', 275, 25, 5, NULL, 10, 'Retenido', 1, 'Ingreso inicial de partida'),
+(90, 'SEED-ENT-25-12', 'Entrada', '2026-10-01 09:00:00', 300, 25, 12, NULL, 11, 'Retenido', 1, 'Ingreso inicial de partida'),
+(91, 'SEED-ENT-26-6', 'Entrada', '2026-10-02 09:00:00', 282, 26, 6, NULL, 11, 'Retenido', 2, 'Ingreso inicial de partida'),
+(92, 'SEED-TRA-26-6', 'Traslado', '2026-10-02 11:00:00', 20, 26, 6, 11, 12, 'Retenido', 2, 'Reubicación interna'),
+(93, 'SEED-ENT-26-13', 'Entrada', '2026-10-02 09:00:00', 307, 26, 13, NULL, 12, 'Retenido', 2, 'Ingreso inicial de partida'),
+(94, 'SEED-TRA-26-13', 'Traslado', '2026-10-02 11:00:00', 20, 26, 13, 12, 13, 'Retenido', 2, 'Reubicación interna'),
+(95, 'SEED-ENT-27-7', 'Entrada', '2026-10-03 09:00:00', 289, 27, 7, NULL, 12, 'Liberado', 3, 'Ingreso inicial de partida'),
+(96, 'SEED-SAL-27-7', 'Salida', '2026-10-03 14:00:00', 10, 27, 7, 12, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(97, 'SEED-ENT-27-14', 'Entrada', '2026-10-03 09:00:00', 314, 27, 14, NULL, 13, 'Liberado', 3, 'Ingreso inicial de partida'),
+(98, 'SEED-SAL-27-14', 'Salida', '2026-10-03 14:00:00', 10, 27, 14, 13, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(99, 'SEED-ENT-28-8', 'Entrada', '2026-10-04 09:00:00', 266, 28, 8, NULL, 13, 'Retenido', 4, 'Ingreso inicial de partida'),
+(100, 'SEED-TRA-28-8', 'Traslado', '2026-10-04 11:00:00', 20, 28, 8, 13, 14, 'Retenido', 2, 'Reubicación interna'),
+(101, 'SEED-ENT-28-15', 'Entrada', '2026-10-04 09:00:00', 291, 28, 15, NULL, 14, 'Retenido', 4, 'Ingreso inicial de partida'),
+(102, 'SEED-TRA-28-15', 'Traslado', '2026-10-04 11:00:00', 20, 28, 15, 14, 15, 'Retenido', 2, 'Reubicación interna'),
+(103, 'SEED-ENT-29-9', 'Entrada', '2026-10-05 09:00:00', 303, 29, 9, NULL, 14, 'Retenido', 5, 'Ingreso inicial de partida'),
+(104, 'SEED-ENT-29-16', 'Entrada', '2026-10-05 09:00:00', 328, 29, 16, NULL, 15, 'Retenido', 5, 'Ingreso inicial de partida'),
+(105, 'SEED-ENT-30-10', 'Entrada', '2026-10-06 09:00:00', 310, 30, 10, NULL, 15, 'Liberado', 6, 'Ingreso inicial de partida'),
+(106, 'SEED-TRA-30-10', 'Traslado', '2026-10-06 11:00:00', 20, 30, 10, 15, 1, 'Liberado', 2, 'Reubicación interna'),
+(107, 'SEED-SAL-30-10', 'Salida', '2026-10-06 14:00:00', 10, 30, 10, 15, NULL, 'Liberado', 3, 'Retiro autorizado'),
+(108, 'SEED-ENT-30-17', 'Entrada', '2026-10-06 09:00:00', 335, 30, 17, NULL, 1, 'Liberado', 6, 'Ingreso inicial de partida'),
+(109, 'SEED-TRA-30-17', 'Traslado', '2026-10-06 11:00:00', 20, 30, 17, 1, 2, 'Liberado', 2, 'Reubicación interna'),
+(110, 'SEED-SAL-30-17', 'Salida', '2026-10-06 14:00:00', 10, 30, 17, 1, NULL, 'Liberado', 3, 'Retiro autorizado');
+
+-- inspeccion: 25 registros
+INSERT INTO inspeccion (id_inspeccion, fecha, resultado, observaciones, id_declaracion, id_funcionario) VALUES
+(1, '2026-09-09 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 1, 1),
+(2, '2026-09-10 10:00:00', 'Con observaciones', 'Se requiere aclarar la descripción comercial.', 2, 2),
+(3, '2026-09-11 10:00:00', 'Aprobada', 'Documentos y mercancía verificados.', 3, 3),
+(4, '2026-09-12 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 4, 4),
+(5, '2026-10-01 10:00:00', 'Con observaciones', 'Se requiere aclarar la descripción comercial.', 5, 5),
+(6, '2026-10-02 10:00:00', 'Aprobada', 'Documentos y mercancía verificados.', 6, 6),
+(7, '2026-10-03 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 7, 1),
+(8, '2026-10-04 10:00:00', 'Con observaciones', 'Se requiere aclarar la descripción comercial.', 8, 2),
+(9, '2026-10-05 10:00:00', 'Aprobada', 'Documentos y mercancía verificados.', 9, 3),
+(10, '2026-10-06 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 10, 4),
+(11, '2026-10-07 10:00:00', 'Con observaciones', 'Se requiere aclarar la descripción comercial.', 11, 5),
+(12, '2026-10-08 10:00:00', 'Aprobada', 'Documentos y mercancía verificados.', 12, 6),
+(13, '2026-10-09 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 13, 1),
+(14, '2026-10-10 10:00:00', 'Con observaciones', 'Se requiere aclarar la descripción comercial.', 14, 2),
+(15, '2026-10-11 10:00:00', 'Aprobada', 'Documentos y mercancía verificados.', 15, 3),
+(16, '2026-10-12 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 16, 4),
+(17, '2026-10-13 10:00:00', 'Con observaciones', 'Se requiere aclarar la descripción comercial.', 17, 5),
+(18, '2026-10-14 10:00:00', 'Aprobada', 'Documentos y mercancía verificados.', 18, 6),
+(19, '2026-10-15 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 19, 1),
+(20, '2026-10-16 10:00:00', 'Con observaciones', 'Se requiere aclarar la descripción comercial.', 20, 2),
+(21, '2026-10-17 10:00:00', 'Aprobada', 'Documentos y mercancía verificados.', 21, 3),
+(22, '2026-10-18 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 22, 4),
+(23, '2026-10-19 10:00:00', 'Con observaciones', 'Se requiere aclarar la descripción comercial.', 23, 5),
+(24, '2026-10-20 10:00:00', 'Aprobada', 'Documentos y mercancía verificados.', 24, 6),
+(25, '2026-10-01 10:00:00', 'Rechazada', 'Diferencia en la documentación de origen; permanece retenida.', 25, 1);
+COMMIT;
+-- Laboratorio #3 | Inventario aduanero | MySQL 8.4
+-- Integrantes: COMPLETAR NOMBRES Y APELLIDOS
+-- Fecha de preparación: 2026-10-23
+-- Datos sintéticos con fines educativos; importes en USD.
+USE aduana_lab3;
+
+-- CONSULTA 1: Declaraciones de importación en octubre de 2026
+SELECT p.nombre AS pais_origen, COUNT(*) AS declaraciones
+FROM declaracion d JOIN pais p ON p.id_pais=d.id_pais_origen
+WHERE d.regimen='Importacion' AND d.fecha >= '2026-10-01' AND d.fecha < '2026-11-01'
+GROUP BY p.id_pais,p.nombre ORDER BY declaraciones DESC,p.nombre;
+
+-- CONSULTA 2: Mercancías retenidas y su origen por bodega
+SELECT p.descripcion AS producto, pa.nombre AS pais_origen, b.nombre AS bodega, d.numero AS declaracion, i.cantidad
+FROM inventario i JOIN producto p ON p.id_producto=i.id_producto
+JOIN declaracion d ON d.id_declaracion=i.id_declaracion
+JOIN pais pa ON pa.id_pais=d.id_pais_origen JOIN bodega b ON b.id_bodega=i.id_bodega
+WHERE i.estado='Retenido' AND i.cantidad>0 ORDER BY b.nombre,p.descripcion,d.numero;
+
+-- CONSULTA 3: Países con más contenedores recibidos
+SELECT p.nombre AS pais_origen, COUNT(c.id_contenedor) AS contenedores
+FROM contenedor c JOIN declaracion d ON d.id_declaracion=c.id_declaracion
+JOIN pais p ON p.id_pais=d.id_pais_origen GROUP BY p.id_pais,p.nombre
+ORDER BY contenedores DESC,p.nombre;
+
+-- CONSULTA 4: Importadores con mayor valor total declarado en USD
+SELECT i.razon_social, SUM(dd.valor_declarado) AS valor_total_usd
+FROM importador i JOIN declaracion d ON d.id_importador=i.id_importador
+JOIN detalle_declaracion dd ON dd.id_declaracion=d.id_declaracion
+GROUP BY i.id_importador,i.razon_social ORDER BY valor_total_usd DESC,i.razon_social;
+
+-- CONSULTA 5: Inspecciones con observaciones y su funcionario
+SELECT d.numero AS declaracion, ins.fecha, f.nombre AS funcionario, ins.observaciones
+FROM inspeccion ins JOIN declaracion d ON d.id_declaracion=ins.id_declaracion
+JOIN v_funcionario_publico f ON f.id_funcionario=ins.id_funcionario
+WHERE ins.resultado='Con observaciones' ORDER BY ins.fecha DESC,ins.id_inspeccion DESC;
+
+-- CONSULTA 6: Stock del producto ADU-0001 en todas las bodegas
+SELECT p.sku,p.descripcion,p.unidad_medida,b.nombre AS bodega,i.estado,SUM(i.cantidad) AS cantidad
+FROM inventario i JOIN producto p ON p.id_producto=i.id_producto
+JOIN bodega b ON b.id_bodega=i.id_bodega WHERE p.sku='ADU-0001'
+GROUP BY p.id_producto,p.sku,p.descripcion,p.unidad_medida,b.id_bodega,b.nombre,i.estado
+ORDER BY b.nombre,i.estado;
+
+-- CONSULTA 7: Ocupación de bodegas en kilogramos y estado
+SELECT b.nombre,i.estado,SUM(i.cantidad*p.peso_unitario_kg) AS peso_ocupado_kg,
+ b.capacidad_peso_kg, ROUND(100*SUM(i.cantidad*p.peso_unitario_kg)/b.capacidad_peso_kg,2) AS porcentaje_capacidad
+FROM bodega b JOIN inventario i ON i.id_bodega=b.id_bodega
+JOIN producto p ON p.id_producto=i.id_producto
+GROUP BY b.id_bodega,b.nombre,b.capacidad_peso_kg,i.estado ORDER BY b.nombre,i.estado;
+
+-- CONSULTA 8: Movimientos de octubre de 2026 por tipo y producto
+SELECT m.tipo,p.sku,p.descripcion,p.unidad_medida,COUNT(*) AS operaciones,SUM(m.cantidad) AS cantidad
+FROM movimiento m JOIN producto p ON p.id_producto=m.id_producto
+WHERE m.fecha>='2026-10-01' AND m.fecha<'2026-11-01'
+GROUP BY m.tipo,p.id_producto,p.sku,p.descripcion,p.unidad_medida ORDER BY m.tipo,p.sku;

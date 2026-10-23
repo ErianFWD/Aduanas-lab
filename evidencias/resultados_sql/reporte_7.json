@@ -1,0 +1,217 @@
+{
+  "id": 7,
+  "titulo": "Ocupación de bodegas en kilogramos y estado",
+  "sql": "SELECT b.nombre,i.estado,SUM(i.cantidad*p.peso_unitario_kg) AS peso_ocupado_kg,\n b.capacidad_peso_kg, ROUND(100*SUM(i.cantidad*p.peso_unitario_kg)/b.capacidad_peso_kg,2) AS porcentaje_capacidad\nFROM bodega b JOIN inventario i ON i.id_bodega=b.id_bodega\nJOIN producto p ON p.id_producto=i.id_producto\nGROUP BY b.id_bodega,b.nombre,b.capacidad_peso_kg,i.estado ORDER BY b.nombre,i.estado;",
+  "rows": [
+    {
+      "nombre": "Bodega 01",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 154.4,
+      "capacidad_peso_kg": 52500,
+      "porcentaje_capacidad": 0.29
+    },
+    {
+      "nombre": "Bodega 01",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 585,
+      "capacidad_peso_kg": 52500,
+      "porcentaje_capacidad": 1.11
+    },
+    {
+      "nombre": "Bodega 02",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 5.6,
+      "capacidad_peso_kg": 55000,
+      "porcentaje_capacidad": 0.01
+    },
+    {
+      "nombre": "Bodega 02",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 4027.22,
+      "capacidad_peso_kg": 55000,
+      "porcentaje_capacidad": 7.32
+    },
+    {
+      "nombre": "Bodega 03",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 1237.2,
+      "capacidad_peso_kg": 57500,
+      "porcentaje_capacidad": 2.15
+    },
+    {
+      "nombre": "Bodega 03",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 14268.6,
+      "capacidad_peso_kg": 57500,
+      "porcentaje_capacidad": 24.81
+    },
+    {
+      "nombre": "Bodega 04",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 13887.2,
+      "capacidad_peso_kg": 60000,
+      "porcentaje_capacidad": 23.15
+    },
+    {
+      "nombre": "Bodega 04",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 4578.6,
+      "capacidad_peso_kg": 60000,
+      "porcentaje_capacidad": 7.63
+    },
+    {
+      "nombre": "Bodega 05",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 1240,
+      "capacidad_peso_kg": 62500,
+      "porcentaje_capacidad": 1.98
+    },
+    {
+      "nombre": "Bodega 05",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 13671.44,
+      "capacidad_peso_kg": 62500,
+      "porcentaje_capacidad": 21.87
+    },
+    {
+      "nombre": "Bodega 06",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 446.76,
+      "capacidad_peso_kg": 65000,
+      "porcentaje_capacidad": 0.69
+    },
+    {
+      "nombre": "Bodega 06",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 4053.5,
+      "capacidad_peso_kg": 65000,
+      "porcentaje_capacidad": 6.24
+    },
+    {
+      "nombre": "Bodega 07",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 6574.15,
+      "capacidad_peso_kg": 67500,
+      "porcentaje_capacidad": 9.74
+    },
+    {
+      "nombre": "Bodega 07",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 210.6,
+      "capacidad_peso_kg": 67500,
+      "porcentaje_capacidad": 0.31
+    },
+    {
+      "nombre": "Bodega 08",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 3,
+      "capacidad_peso_kg": 70000,
+      "porcentaje_capacidad": 0
+    },
+    {
+      "nombre": "Bodega 08",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 5246.8,
+      "capacidad_peso_kg": 70000,
+      "porcentaje_capacidad": 7.5
+    },
+    {
+      "nombre": "Bodega 09",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 12125.2,
+      "capacidad_peso_kg": 72500,
+      "porcentaje_capacidad": 16.72
+    },
+    {
+      "nombre": "Bodega 09",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 1035.7,
+      "capacidad_peso_kg": 72500,
+      "porcentaje_capacidad": 1.43
+    },
+    {
+      "nombre": "Bodega 10",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 7376.6,
+      "capacidad_peso_kg": 75000,
+      "porcentaje_capacidad": 9.84
+    },
+    {
+      "nombre": "Bodega 10",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 17205,
+      "capacidad_peso_kg": 75000,
+      "porcentaje_capacidad": 22.94
+    },
+    {
+      "nombre": "Bodega 11",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 500,
+      "capacidad_peso_kg": 77500,
+      "porcentaje_capacidad": 0.65
+    },
+    {
+      "nombre": "Bodega 11",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 10535.16,
+      "capacidad_peso_kg": 77500,
+      "porcentaje_capacidad": 13.59
+    },
+    {
+      "nombre": "Bodega 12",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 2731.1,
+      "capacidad_peso_kg": 80000,
+      "porcentaje_capacidad": 3.41
+    },
+    {
+      "nombre": "Bodega 12",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 961.25,
+      "capacidad_peso_kg": 80000,
+      "porcentaje_capacidad": 1.2
+    },
+    {
+      "nombre": "Bodega 13",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 3317.8,
+      "capacidad_peso_kg": 82500,
+      "porcentaje_capacidad": 4.02
+    },
+    {
+      "nombre": "Bodega 13",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 6181.65,
+      "capacidad_peso_kg": 82500,
+      "porcentaje_capacidad": 7.49
+    },
+    {
+      "nombre": "Bodega 14",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 4,
+      "capacidad_peso_kg": 85000,
+      "porcentaje_capacidad": 0
+    },
+    {
+      "nombre": "Bodega 14",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 4717.7,
+      "capacidad_peso_kg": 85000,
+      "porcentaje_capacidad": 5.55
+    },
+    {
+      "nombre": "Bodega 15",
+      "estado": "Liberado",
+      "peso_ocupado_kg": 683.5,
+      "capacidad_peso_kg": 87500,
+      "porcentaje_capacidad": 0.78
+    },
+    {
+      "nombre": "Bodega 15",
+      "estado": "Retenido",
+      "peso_ocupado_kg": 1327,
+      "capacidad_peso_kg": 87500,
+      "porcentaje_capacidad": 1.52
+    }
+  ]
+}
